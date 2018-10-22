@@ -43,7 +43,7 @@ class PyVisaGui(QMainWindow):
 
         self.statusBar()
 
-        self.setGeometry(300, 300, 290, 150)
+        self.setGeometry(300, 300, 400, 150)
         self.setWindowTitle('Connection Test')
         self.show()
 
