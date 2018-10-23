@@ -7,8 +7,9 @@ Created on Tue Oct 22 10:35:23 2018
 """
 
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget
+from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
+from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
 
 # Traemos la libreria VISA
 import pyvisa as visa
@@ -18,8 +19,6 @@ import pyvisa as visa
 sys.path.insert(0, 'Libreria')
 # Traemos la clase base que implmenta las funciones de VISA
 from instrument import Instrument
-
-
 
 
 
@@ -96,7 +95,8 @@ class ConneTC_GUI(QMainWindow):
             self.statusBar().showMessage("Primero debe dar \"Conectar\"")
 
     def StartBtnClicked(self):
-        print(self.f_start_Edit.text() + "\n" + self.f_end_Edit.text() + "\n" + self.v_out_Edit.text())
+        print(self.f_start_Edit.text() + "\n" + self.f_end_Edit.text() + "\n"
+        + self.v_out_Edit.text())
 
 
 
