@@ -37,53 +37,31 @@ class ConneTC_GUI(QMainWindow):
 
         self.statusBar()
 
-        #StartBtn = QPushButton("Empezar", self.ex.rightFrame)
-        #StartBtn.resize (80,30)
-        #StartBtn.clicked.connect(self.StartBtnClicked)
-        #self.ex.rightGridLayout.addWidget(StartBtn, 1, 0)
-
         ConnectBtn = QPushButton("Conectar", self.ex.rightFrame)
         ConnectBtn.resize (80,30)
         ConnectBtn.clicked.connect(self.connectButtonClicked)
-        self.ex.rightGridLayout.addWidget(ConnectBtn, 2, 0)
+        self.ex.rightGridLayout.addWidget(ConnectBtn, 1, 0)
 
         SendBtn = QPushButton("Enviar Comando", self.ex.rightFrame)
         SendBtn.resize (80,30)
         SendBtn.clicked.connect(self.sendCommand)
-        self.ex.rightGridLayout.addWidget(SendBtn, 3, 0)
-
-        SendReceiveBtn = QPushButton("Enviar Comando y esperar respuesta", self.ex.rightFrame)
-        SendReceiveBtn.resize (100,30)
-        SendReceiveBtn.clicked.connect(self.sendCommandwAnswer)
-        self.ex.rightGridLayout.addWidget(SendReceiveBtn, 4, 0)
+        self.ex.rightGridLayout.addWidget(SendBtn, 2, 0)
 
         ExitBtn = QPushButton("Salir", self.ex.rightFrame)
         ExitBtn.resize (80,30)
         ExitBtn.clicked.connect(qApp.quit)
-        self.ex.rightGridLayout.addWidget(ExitBtn, 5, 0)
+        self.ex.rightGridLayout.addWidget(ExitBtn, 3, 0)
 
-        #f_start = QLabel('Fecuencia de inicio: ')
-        #f_end = QLabel('Fecuencia final: ')
-        #v_out = QLabel('Tension de salida: ')
-        send_command = QLabel('Enviar comando: ')
+        send_command = QLabel('Comando: ')
         self.command_answer = QLabel(' ')
-        #self.f_start_Edit = QLineEdit()
-        #self.f_end_Edit = QLineEdit()
-        #self.v_out_Edit = QLineEdit()
         self.send_Command_Edit = QLineEdit()
 
-        #self.ex.leftGridLayout.addWidget(f_start, 1, 0)
-        #self.ex.leftGridLayout.addWidget(f_end, 2, 0)
-        #self.ex.leftGridLayout.addWidget(v_out, 3, 0)
-        self.ex.leftGridLayout.addWidget(send_command, 4, 0)
-        self.ex.leftGridLayout.addWidget(self.command_answer, 5, 0)
-        #self.ex.leftGridLayout.addWidget(self.f_start_Edit, 1, 1)
-        #self.ex.leftGridLayout.addWidget(self.f_end_Edit, 2, 1)
-        #self.ex.leftGridLayout.addWidget(self.v_out_Edit, 3, 1)
-        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 4, 1)
+        self.ex.leftGridLayout.addWidget(send_command, 1, 0)
+        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 1, 1)
+        self.ex.leftGridLayout.addWidget(self.command_answer, 2, 0)
 
         self.setGeometry(300, 300, 800, 200)
-        self.setWindowTitle('ConneTC')
+        self.setWindowTitle('Command Test')
         self.show()
 
 
@@ -91,28 +69,19 @@ class ConneTC_GUI(QMainWindow):
         s, self.instrumentList = SearchInstrument(self)
         self.statusBar().showMessage(s)
 
-    def sendCommandwAnswer (self):
-        if self.instrumentList:
-            self.agilent_Analizer = self.instrumentList[0]
-            self.agilent_Analizer.write(self.send_Command_Edit.text())
-            data = self.agilent_Analizer.read()
-            self.command_answer.setText(data)
-            #print("Datos recibidos: " + data)
-
-        else:
-            self.statusBar().showMessage("Primero debe dar \"Conectar\"")
-
     def sendCommand (self):
         if self.instrumentList:
-            self.agilent_Analizer = self.instrumentList[0]
-            self.agilent_Analizer.write(self.send_Command_Edit.text())
+            self.instrument = self.instrumentList[0]
+            self.command = self.send_Command_Edit.text()
+            self.instrument.write(self.command)
+
+            if self.command.find("?") != -1:
+                data = self.instrument.read()
+                self.command_answer.setText(data)
+                #print("Datos recibidos: " + data)
 
         else:
             self.statusBar().showMessage("Primero debe dar \"Conectar\"")
-
-    #def StartBtnClicked(self):
-        #print(self.f_start_Edit.text() + "\n" + self.f_end_Edit.text() + "\n"
-        #+ self.v_out_Edit.text())
 
 
 
@@ -152,7 +121,7 @@ def SearchInstrument (self):
     # Pedimos la lista de instrumentos
     rm=visa.ResourceManager('@py')
     #print(rm.list_resources('?*'))
-    print(rm.list_resources())
+    #print(rm.list_resources())
 
     if rm.list_resources():
         s = ("")
