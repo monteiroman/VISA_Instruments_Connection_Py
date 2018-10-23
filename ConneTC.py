@@ -25,6 +25,7 @@ from instrument import Instrument
 
 class ConneTC_GUI(QMainWindow):
 
+    instrumentList = []
 
     def __init__(self):
         super().__init__()
@@ -42,39 +43,57 @@ class ConneTC_GUI(QMainWindow):
         StartBtn.clicked.connect(self.StartBtnClicked)
         self.ex.rightGridLayout.addWidget(StartBtn, 1, 0)
 
-        TestBtn = QPushButton("Probar conexión", self.ex.rightFrame)
-        TestBtn.resize (80,30)
-        TestBtn.clicked.connect(self.testButtonClicked)
-        self.ex.rightGridLayout.addWidget(TestBtn, 2, 0)
+        ConnectBtn = QPushButton("Conectar", self.ex.rightFrame)
+        ConnectBtn.resize (80,30)
+        ConnectBtn.clicked.connect(self.connectButtonClicked)
+        self.ex.rightGridLayout.addWidget(ConnectBtn, 2, 0)
+
+        SendBtn = QPushButton("Enviar Comando", self.ex.rightFrame)
+        SendBtn.resize (80,30)
+        SendBtn.clicked.connect(self.sendCommand)
+        self.ex.rightGridLayout.addWidget(SendBtn, 3, 0)
 
         ExitBtn = QPushButton("Salir", self.ex.rightFrame)
         ExitBtn.resize (80,30)
         ExitBtn.clicked.connect(qApp.quit)
-        self.ex.rightGridLayout.addWidget(ExitBtn, 3, 0)
+        self.ex.rightGridLayout.addWidget(ExitBtn, 4, 0)
 
         f_start = QLabel('Fecuencia de inicio: ')
         f_end = QLabel('Fecuencia final: ')
         v_out = QLabel('Tension de salida: ')
+        send_command = QLabel('Enviar comando: ')
         self.f_start_Edit = QLineEdit()
         self.f_end_Edit = QLineEdit()
         self.v_out_Edit = QLineEdit()
+        self.send_Command_Edit = QLineEdit()
 
         self.ex.leftGridLayout.addWidget(f_start, 1, 0)
         self.ex.leftGridLayout.addWidget(f_end, 2, 0)
         self.ex.leftGridLayout.addWidget(v_out, 3, 0)
+        self.ex.leftGridLayout.addWidget(send_command, 4, 0)
         self.ex.leftGridLayout.addWidget(self.f_start_Edit, 1, 1)
         self.ex.leftGridLayout.addWidget(self.f_end_Edit, 2, 1)
         self.ex.leftGridLayout.addWidget(self.v_out_Edit, 3, 1)
+        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 4, 1)
 
         self.setGeometry(300, 300, 500, 200)
         self.setWindowTitle('ConneTC')
         self.show()
 
 
-    def testButtonClicked (self):
-        s = SearchInstrument()
+    def connectButtonClicked (self):
+        s, self.instrumentList = SearchInstrument(self)
         self.statusBar().showMessage(s)
 
+    def sendCommand (self):
+        if self.instrumentList:
+            self.agilent_Analizer = self.instrumentList[0]
+            self.agilent_Analizer.write(self.send_Command_Edit)
+            data = self.agilent_Analizer.read()
+            print("Datos recibidos: " + data)
+
+        else:
+            self.statusBar().showMessage("Primero debe dar \"Conectar\"")
 
     def StartBtnClicked(self):
         print(self.f_start_Edit.text() + "\n" + self.f_end_Edit.text() + "\n" + self.v_out_Edit.text())
@@ -112,7 +131,8 @@ class HorizontalBox(QWidget):
 
 
 
-def SearchInstrument ():
+def SearchInstrument (self):
+    self.instrumentList = []
     # Pedimos la lista de instrumentos
     rm=visa.ResourceManager('@py')
     #print(rm.list_resources('?*'))
@@ -125,11 +145,15 @@ def SearchInstrument ():
             instrument_handler = rm.open_resource(resource_obj)
 	    # Implementamos la clase instrumento base
             instrumento = Instrument(instrument_handler)
+            self.instrumentList.append(instrumento)
 	    # Imprimimos el ID el instrumento
             s = s + "\t" + instrumento.get_ID() + "\n"
-        return "Instrumentos conectados: \n" + s
+        self.auxString = "Instrumentos conectados: " + s
+        return self.auxString, self.instrumentList
+
     else:
-        return "No hay dispositivos conectados"
+        self.auxString = "No hay dispositivos para conectarse"
+        return self.auxString, self.instrumentList
 
 
 
