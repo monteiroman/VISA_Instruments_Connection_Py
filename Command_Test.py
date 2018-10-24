@@ -58,7 +58,7 @@ class ConneTC_GUI(QMainWindow):
 
         self.ex.leftGridLayout.addWidget(send_command, 1, 0)
         self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 1, 1)
-        self.ex.leftGridLayout.addWidget(self.command_answer, 2, 0)
+        self.ex.leftGridLayout.addWidget(self.command_answer, 2, 1)
 
         self.setGeometry(300, 300, 800, 200)
         self.setWindowTitle('Command Test')
