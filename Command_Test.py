@@ -143,14 +143,14 @@ def SearchInstrument (self):
         return self.auxString, self.instrumentList
 
 
-def SelectInstrument (self, instrumentList):
-    return self.instrumentList[0]
+def SelectInstrument (instrumentList):
+    return instrumentList[0]
 
 
 def SendCommand (instrument, command):
-    self.instrument.write(self.command)
-    if self.command.find("?") != -1:
-        data = self.instrument.read()
+    instrument.write(command)
+    if command.find("?") != -1:
+        data = instrument.read()
         #print("Datos recibidos: " + data)
         return data
 
