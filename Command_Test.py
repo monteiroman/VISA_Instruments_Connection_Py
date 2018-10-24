@@ -44,7 +44,7 @@ class ConneTC_GUI(QMainWindow):
 
         SendBtn = QPushButton("Enviar Comando", self.ex.rightFrame)
         SendBtn.resize (80,30)
-        SendBtn.clicked.connect(self.sendCommand)
+        SendBtn.clicked.connect(self.sendButtonClicked)
         self.ex.rightGridLayout.addWidget(SendBtn, 2, 0)
 
         ExitBtn = QPushButton("Salir", self.ex.rightFrame)
@@ -67,21 +67,23 @@ class ConneTC_GUI(QMainWindow):
 
     def connectButtonClicked (self):
         s, self.instrumentList = SearchInstrument(self)
+        if self.instrumentList:
+            self.instrument = SelectInstrument(self.instrumentList)
+
         self.statusBar().showMessage(s)
 
-    def sendCommand (self):
-        if self.instrumentList:
-            self.instrument = self.instrumentList[0]
-            self.command = self.send_Command_Edit.text()
-            self.instrument.write(self.command)
 
-            if self.command.find("?") != -1:
-                data = self.instrument.read()
+    def sendButtonClicked (self):
+        if self.instrumentList:
+            self.command = self.send_Command_Edit.text()
+            data = SendCommand (self.instrument, self.command)
+            if data:
                 self.command_answer.setText(data)
-                #print("Datos recibidos: " + data)
 
         else:
             self.statusBar().showMessage("Primero debe dar \"Conectar\"")
+
+
 
 
 
@@ -140,6 +142,17 @@ def SearchInstrument (self):
         self.auxString = "No hay dispositivos para conectarse"
         return self.auxString, self.instrumentList
 
+
+def SelectInstrument (self, instrumentList):
+    return self.instrumentList[0]
+
+
+def SendCommand (instrument, command):
+    self.instrument.write(self.command)
+    if self.command.find("?") != -1:
+        data = self.instrument.read()
+        #print("Datos recibidos: " + data)
+        return data
 
 
 
