@@ -10,6 +10,10 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget
 from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
 from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
+import matplotlib.pyplot as plt
+import numpy as np
+
+import time
 
 # Traemos la libreria VISA
 import pyvisa as visa
@@ -42,22 +46,17 @@ class ConneTC_GUI(QMainWindow):
         ConnectBtn.clicked.connect(self.connectButtonClicked)
         self.ex.rightGridLayout.addWidget(ConnectBtn, 1, 0)
 
-        SendBtn = QPushButton("Enviar Comando", self.ex.rightFrame)
-        SendBtn.resize (80,30)
-        SendBtn.clicked.connect(self.sendButtonClicked)
-        self.ex.rightGridLayout.addWidget(SendBtn, 2, 0)
+        StartBtn = QPushButton("Comenzar", self.ex.rightFrame)
+        StartBtn.resize (80,30)
+        StartBtn.clicked.connect(self.startButtonClicked)
+        self.ex.rightGridLayout.addWidget(StartBtn, 2, 0)
 
         ExitBtn = QPushButton("Salir", self.ex.rightFrame)
         ExitBtn.resize (80,30)
         ExitBtn.clicked.connect(qApp.quit)
         self.ex.rightGridLayout.addWidget(ExitBtn, 3, 0)
 
-        send_command = QLabel('Comando: ')
-        self.command_answer = QLabel(' ')
-        self.send_Command_Edit = QLineEdit()
-
-        self.ex.leftGridLayout.addWidget(send_command, 1, 0)
-        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 1, 1)
+        self.command_answer = QLabel('FFT Magnitude')
         self.ex.leftGridLayout.addWidget(self.command_answer, 2, 1)
 
         self.setGeometry(300, 300, 800, 200)
@@ -73,13 +72,9 @@ class ConneTC_GUI(QMainWindow):
         self.statusBar().showMessage(s)
 
 
-    def sendButtonClicked (self):
+    def startButtonClicked (self):
         if self.instrumentList:
-            self.command = self.send_Command_Edit.text()
-            data = SendCommand (self.instrument, self.command)
-            if data:
-                self.command_answer.setText(data)
-
+            StartMeasure(self.instrument)
         else:
             self.statusBar().showMessage("Primero debe dar \"Conectar\"")
 
@@ -147,17 +142,92 @@ def SelectInstrument (instrumentList):
     return instrumentList[0]
 
 
-def SendCommand (instrument, command):
-    instrument.write(command)
-    if command.find("?") != -1:
-        data = instrument.read()
-        #print("Datos recibidos: " + data)
-        return data
+def StartMeasure(instrument):
+    instrument.write("DISP:ANAL:MODE MAGN")
+    instrument.write("SENS:WAV:POIN 256")
+    instrument.write("TRIG:GRAP:SOUR IMM")
+    instrument.write("INIT:GRAP (@1)")
+    aux = "1"
+    while int(aux) is not 0:
+        instrument.write("STAT:OPER:COND?")
+        aux = instrument.read()
+        print(aux)
+        time.sleep(1)
 
+    instrument.write("FETC:ARR? (@1) ")
+    message = instrument.read_raw()
+
+    #print(f"type #: {type(message[0])}")
+    if message[0] != 35:
+        return
+
+    # file = open("RAW_Message", "wb")
+    # file.write(message)
+    # file.close()
+
+    digits = message[1:2][0]-48
+    print(f"type digits: {type(digits)} = {digits}")
+
+    count = message[2:2+digits]
+    print(f"type count: {type(count)} = {count}")
+
+
+def AnalyzeFile():
+
+    import struct
+
+    file = open("RAW_Message", "rb")
+    message = file.read()
+    file.close()
+
+    # convert ascii to int
+    digits = message[1:2][0] - 48
+    print(f"type digits: {type(digits)} = {digits}")
+
+    # extract the number of bitecount
+    count = message[2:2+digits]
+    print(f"type count: {type(count)} = {count}")
+
+    # convert bytes to string
+    aux = count.decode("utf-8")
+    print(f"type count: {type(aux)} = {aux}")
+
+    # string2int
+    aux = int(aux)
+    print(f"type count: {type(aux)} = {aux}")
+
+    bytesData = message[2+digits:-1]
+
+    #for i in range(0, len(bytesData), 4)
+
+    for i in range(0, len(bytesData), 4):
+        packed = bytesData[i:i+4]
+        unpacked = struct.unpack("f", packed)
+        print(f"type unpacked: {type(unpacked)} = {unpacked}")
+
+    print(f"length bytesData: {len(bytesData)}")
+
+    
+
+    x = np.empty(256)
+    filler = np.arange(0,256,1)
+    index = np.arange(x.size)
+    np.put(x,index,filler)
+    print(x)
+
+
+    plt.plot(x, aux2)    # Bode magnitude plot
+
+    plt.grid(True)
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Magnitude [dB]')
+    plt.title('FFT')
 
 
 if __name__ == '__main__':
 
-    app = QApplication(sys.argv)
-    ex = ConneTC_GUI()
-    sys.exit(app.exec_())
+    AnalyzeFile()
+
+    # app = QApplication(sys.argv)
+    # ex = ConneTC_GUI()
+    # sys.exit(app.exec_())
