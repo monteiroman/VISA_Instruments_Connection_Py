@@ -10,7 +10,8 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget
 from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
 from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
-import FFT_Magnitude.core as FFTMag
+#from Agilent_U8903A import FFT_Magnitude
+import Agilent_U8903A.FFT_Magnitude.core as FFTMag
 
 # Traemos la libreria VISA
 import pyvisa as visa
@@ -23,7 +24,7 @@ from instrument import Instrument
 
 
 
-class ConneTC_GUI(QMainWindow):
+class ConnecTC_GUI(QMainWindow):
 
     instrumentList = []
 
@@ -161,5 +162,5 @@ def FFT_Mag_Measure ():
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    ex = ConneTC_GUI()
+    ex = ConnecTC_GUI()
     sys.exit(app.exec_())

@@ -106,6 +106,6 @@ if __name__ == '__main__':
 
     AnalyzeFile()
 
-    app = QApplication(sys.argv)
-    ex = ConneTC_GUI()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # ex = ConneTC_GUI()
+    # sys.exit(app.exec_())
