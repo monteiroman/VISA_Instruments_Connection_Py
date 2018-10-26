@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
 from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
 import matplotlib.pyplot as plt
 import numpy as np
+import math as mat
 
 import time
 
@@ -180,48 +181,44 @@ def AnalyzeFile():
     message = file.read()
     file.close()
 
-    # convert ascii to int
+    # convert ascii to int. First number of the file
     digits = message[1:2][0] - 48
-    print(f"type digits: {type(digits)} = {digits}")
+    #print(f"type digits: {type(digits)} = {digits}")
 
-    # extract the number of bitecount
+    # extract the number of bytecount
     count = message[2:2+digits]
-    print(f"type count: {type(count)} = {count}")
-
+    #print(f"type count: {type(count)} = {count}")
     # convert bytes to string
-    aux = count.decode("utf-8")
-    print(f"type count: {type(aux)} = {aux}")
+    bytecount = count.decode("utf-8")
+    #print(f"type count: {type(aux)} = {aux}")
 
     # string2int
-    aux = int(aux)
-    print(f"type count: {type(aux)} = {aux}")
+    bytecount = int(bytecount)
+    #print(f"type count: {type(aux)} = {aux}")
 
+    # file info data chop
     bytesData = message[2+digits:-1]
 
-    #for i in range(0, len(bytesData), 4)
-
+    # converts file bytes in floats
+    y = []
     for i in range(0, len(bytesData), 4):
         packed = bytesData[i:i+4]
         unpacked = struct.unpack("f", packed)
-        print(f"type unpacked: {type(unpacked)} = {unpacked}")
+        y.append(unpacked[0])
 
-    print(f"length bytesData: {len(bytesData)}")
-
-    
 
     x = np.empty(256)
     filler = np.arange(0,256,1)
     index = np.arange(x.size)
     np.put(x,index,filler)
-    print(x)
+    
 
-
-    plt.plot(x, aux2)    # Bode magnitude plot
-
+    plt.plot(x, y)
     plt.grid(True)
     plt.xlabel('Frequency [Hz]')
     plt.ylabel('Magnitude [dB]')
     plt.title('FFT')
+    plt.show()
 
 
 if __name__ == '__main__':
