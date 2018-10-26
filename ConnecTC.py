@@ -10,6 +10,7 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget
 from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
 from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
+import FFT_Magnitude.core as FFTMag
 
 # Traemos la libreria VISA
 import pyvisa as visa
@@ -37,85 +38,54 @@ class ConneTC_GUI(QMainWindow):
 
         self.statusBar()
 
-        #StartBtn = QPushButton("Empezar", self.ex.rightFrame)
-        #StartBtn.resize (80,30)
-        #StartBtn.clicked.connect(self.StartBtnClicked)
-        #self.ex.rightGridLayout.addWidget(StartBtn, 1, 0)
-
         ConnectBtn = QPushButton("Conectar", self.ex.rightFrame)
         ConnectBtn.resize (80,30)
         ConnectBtn.clicked.connect(self.connectButtonClicked)
-        self.ex.rightGridLayout.addWidget(ConnectBtn, 2, 0)
+        self.ex.rightGridLayout.addWidget(ConnectBtn, 1, 0)
 
-        SendBtn = QPushButton("Enviar Comando", self.ex.rightFrame)
-        SendBtn.resize (80,30)
-        SendBtn.clicked.connect(self.sendCommand)
-        self.ex.rightGridLayout.addWidget(SendBtn, 3, 0)
-
-        #SendReceiveBtn = QPushButton("Enviar Comando y esperar respuesta", self.ex.rightFrame)
-        #SendReceiveBtn.resize (100,30)
-        #SendReceiveBtn.clicked.connect(self.sendCommandwAnswer)
-        #self.ex.rightGridLayout.addWidget(SendReceiveBtn, 4, 0)
+        FFTMagBtn = QPushButton("FFT Magnitud", self.ex.rightFrame)
+        FFTMagBtn.resize (80,30)
+        FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
+        self.ex.rightGridLayout.addWidget(FFTMagBtn, 2, 0)
 
         ExitBtn = QPushButton("Salir", self.ex.rightFrame)
         ExitBtn.resize (80,30)
         ExitBtn.clicked.connect(qApp.quit)
-        self.ex.rightGridLayout.addWidget(ExitBtn, 5, 0)
+        self.ex.rightGridLayout.addWidget(ExitBtn, 3, 0)
 
-        #f_start = QLabel('Fecuencia de inicio: ')
-        #f_end = QLabel('Fecuencia final: ')
-        #v_out = QLabel('Tension de salida: ')
         send_command = QLabel('Comando: ')
         self.command_answer = QLabel(' ')
-        #self.f_start_Edit = QLineEdit()
-        #self.f_end_Edit = QLineEdit()
-        #self.v_out_Edit = QLineEdit()
         self.send_Command_Edit = QLineEdit()
 
-        #self.ex.leftGridLayout.addWidget(f_start, 1, 0)
-        #self.ex.leftGridLayout.addWidget(f_end, 2, 0)
-        #self.ex.leftGridLayout.addWidget(v_out, 3, 0)
-        self.ex.leftGridLayout.addWidget(send_command, 4, 0)
-        self.ex.leftGridLayout.addWidget(self.command_answer, 5, 0)
-        #self.ex.leftGridLayout.addWidget(self.f_start_Edit, 1, 1)
-        #self.ex.leftGridLayout.addWidget(self.f_end_Edit, 2, 1)
-        #self.ex.leftGridLayout.addWidget(self.v_out_Edit, 3, 1)
-        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 4, 1)
+        self.ex.leftGridLayout.addWidget(send_command, 1, 0)
+        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 1, 1)
+        self.ex.leftGridLayout.addWidget(self.command_answer, 2, 1)
 
         self.setGeometry(300, 300, 800, 200)
-        self.setWindowTitle('ConneTC')
+        self.setWindowTitle('Command Test')
         self.show()
 
 
     def connectButtonClicked (self):
         s, self.instrumentList = SearchInstrument(self)
+        if self.instrumentList:
+            self.instrument = SelectInstrument(self.instrumentList)
+
         self.statusBar().showMessage(s)
 
-    def sendCommand (self):
-        if self.instrumentList:
-            self.instrument = self.instrumentList[0]
-            self.command = self.send_Command_Edit.text()
-            self.instrument.write(self.command)
 
-            if self.command.find("?") != -1:
-                data = self.instrument.read()
-                self.command_answer.setText(data)
-                #print("Datos recibidos: " + data)
+    def FFTMagBtnClicked (self):
+        if self.instrumentList:
+            self.statusBar().showMessage("Comenzando la comunicacion")
+            # rtn = FFT_Mag_Measure (self.instrument)
+            # if rtn == -1:
+                # self.command_answer.setText("No se pudo realizar la medición")
 
         else:
             self.statusBar().showMessage("Primero debe dar \"Conectar\"")
+            rtn = FFT_Mag_Measure()
 
-    #def sendCommand (self):
-    #    if self.instrumentList:
-    #        self.instrument = self.instrumentList[0]
-    #        self.instrument.write(self.send_Command_Edit.text())
 
-    #    else:
-    #        self.statusBar().showMessage("Primero debe dar \"Conectar\"")
-
-    #def StartBtnClicked(self):
-        #print(self.f_start_Edit.text() + "\n" + self.f_end_Edit.text() + "\n"
-        #+ self.v_out_Edit.text())
 
 
 
@@ -130,7 +100,7 @@ class HorizontalBox(QWidget):
     def initBox(self):
 
         self.principalLayout = QHBoxLayout(self)
-#___________Left Frame___________
+        #___________Left Frame___________
         self.leftFrame = QFrame(self)
         self.leftFrame.setFrameShape(QFrame.StyledPanel)
         self.leftFrame.setFrameShadow(QFrame.Raised)
@@ -138,7 +108,7 @@ class HorizontalBox(QWidget):
         self.leftGridLayout = QGridLayout()
         self.verticalLayout.addLayout(self.leftGridLayout)
         self.principalLayout.addWidget(self.leftFrame)
-#___________Right Frame___________
+        #___________Right Frame___________
         self.rightFrame = QFrame(self)
         self.rightFrame.setFrameShape(QFrame.StyledPanel)
         self.rightFrame.setFrameShadow(QFrame.Raised)
@@ -155,7 +125,7 @@ def SearchInstrument (self):
     # Pedimos la lista de instrumentos
     rm=visa.ResourceManager('@py')
     #print(rm.list_resources('?*'))
-    print(rm.list_resources())
+    #print(rm.list_resources())
 
     if rm.list_resources():
         s = ("")
@@ -173,6 +143,17 @@ def SearchInstrument (self):
     else:
         self.auxString = "No hay dispositivos para conectarse"
         return self.auxString, self.instrumentList
+
+
+def SelectInstrument (instrumentList):
+    return instrumentList[0]
+
+
+#def FFT_Mag_Measure (instrument):
+def FFT_Mag_Measure ():
+    #FFTMag.core(instrument)
+    rtn = FFTMag.AnalyzeFile()
+    return 1
 
 
 

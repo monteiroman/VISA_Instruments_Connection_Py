@@ -160,6 +160,7 @@ def StartMeasure(instrument):
 
     #print(f"type #: {type(message[0])}")
     if message[0] != 35:
+        print("No se pudieron obtener los puntos")
         return
 
     # file = open("RAW_Message", "wb")
@@ -211,7 +212,7 @@ def AnalyzeFile():
     filler = np.arange(0,256,1)
     index = np.arange(x.size)
     np.put(x,index,filler)
-    
+
 
     plt.plot(x, y)
     plt.grid(True)
@@ -219,6 +220,8 @@ def AnalyzeFile():
     plt.ylabel('Magnitude [dB]')
     plt.title('FFT')
     plt.show()
+
+    return 1
 
 
 if __name__ == '__main__':
