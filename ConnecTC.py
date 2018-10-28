@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
  QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton,
  QHBoxLayout, QFrame, QVBoxLayout, QTabWidget)
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtGui import QIcon, QPixmap
+
 #from Agilent_U8903A import FFT_Magnitude
 import Agilent_U8903A.FFT_Magnitude.core as FFTMag
 
@@ -34,7 +36,7 @@ class ConnecTC_GUI(QMainWindow):
 
 
     def initUI(self):
-        self.title = 'ConnecTC Measure System'
+        self.title = 'Sistema de medición ConnecTC'
         self.left = 200
         self.top = 100
         self.width = 1000
@@ -82,6 +84,13 @@ class MyTableWidget(QWidget):
         self.ExitBtn = QPushButton("Salir")
         self.ExitBtn.clicked.connect(qApp.quit)
         self.connectTab.layout.leftGridLayout.addWidget(self.ExitBtn, 2, 0)
+
+        self.ImageLabel = QLabel(self)
+        self.pixmap = QPixmap('sources/Pictures/logo1.png')
+        self.ImageLabel.setPixmap(self.pixmap)
+        self.connectTab.layout.rightGridLayout.addWidget(self.ImageLabel, 1, 1)
+
+        #self.connectTab.layout.resize(self.pixmap.width(),self.pixmap.height())
 
         self.connectTab.setLayout(self.connectTab.layout.principalLayout)
 
