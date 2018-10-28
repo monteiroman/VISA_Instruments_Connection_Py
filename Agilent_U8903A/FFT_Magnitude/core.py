@@ -45,11 +45,6 @@ def StartMeasure(instrument):
     # file.write(message)
     # file.close()
 
-    digits = message[1:2][0]-48
-    print(f"type digits: {type(digits)} = {digits}")
-
-    count = message[2:2+digits]
-    print(f"type count: {type(count)} = {count}")
 
 
 def AnalyzeFile():
@@ -105,7 +100,3 @@ def AnalyzeFile():
 if __name__ == '__main__':
 
     AnalyzeFile()
-
-    # app = QApplication(sys.argv)
-    # ex = ConneTC_GUI()
-    # sys.exit(app.exec_())

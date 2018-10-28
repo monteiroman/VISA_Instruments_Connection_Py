@@ -7,9 +7,10 @@ Created on Tue Oct 22 10:35:23 2018
 """
 
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QAction, qApp, QWidget
-from PyQt5.QtWidgets import QLabel, QLineEdit, QTextEdit, QGridLayout
-from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QFrame, QVBoxLayout
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
+ QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton,
+ QHBoxLayout, QFrame, QVBoxLayout, QTabWidget)
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 #from Agilent_U8903A import FFT_Magnitude
 import Agilent_U8903A.FFT_Magnitude.core as FFTMag
 
@@ -26,7 +27,6 @@ from instrument import Instrument
 
 class ConnecTC_GUI(QMainWindow):
 
-    instrumentList = []
 
     def __init__(self):
         super().__init__()
@@ -34,37 +34,94 @@ class ConnecTC_GUI(QMainWindow):
 
 
     def initUI(self):
-        self.ex = HorizontalBox()
-        self.setCentralWidget(self.ex)
+        self.title = 'ConnecTC Measure System'
+        self.left = 200
+        self.top = 100
+        self.width = 1000
+        self.height = 500
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.table_widget = MyTableWidget(self)
+        self.setCentralWidget(self.table_widget)
 
         self.statusBar()
 
-        ConnectBtn = QPushButton("Conectar", self.ex.rightFrame)
-        ConnectBtn.resize (80,30)
-        ConnectBtn.clicked.connect(self.connectButtonClicked)
-        self.ex.rightGridLayout.addWidget(ConnectBtn, 1, 0)
-
-        FFTMagBtn = QPushButton("FFT Magnitud", self.ex.rightFrame)
-        FFTMagBtn.resize (80,30)
-        FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
-        self.ex.rightGridLayout.addWidget(FFTMagBtn, 2, 0)
-
-        ExitBtn = QPushButton("Salir", self.ex.rightFrame)
-        ExitBtn.resize (80,30)
-        ExitBtn.clicked.connect(qApp.quit)
-        self.ex.rightGridLayout.addWidget(ExitBtn, 3, 0)
-
-        send_command = QLabel('Comando: ')
-        self.command_answer = QLabel(' ')
-        self.send_Command_Edit = QLineEdit()
-
-        self.ex.leftGridLayout.addWidget(send_command, 1, 0)
-        self.ex.leftGridLayout.addWidget(self.send_Command_Edit, 1, 1)
-        self.ex.leftGridLayout.addWidget(self.command_answer, 2, 1)
-
-        self.setGeometry(300, 300, 800, 200)
-        self.setWindowTitle('Command Test')
         self.show()
+
+
+
+class MyTableWidget(QWidget):
+
+    instrumentList = []
+
+
+    def __init__(self, parent):
+        super(QWidget, self).__init__(parent)
+        self.layout = QVBoxLayout(self)
+
+        # Initialize tab screen
+        self.tabs = QTabWidget()
+        self.connectTab = QWidget()
+        self.FFTMagTab = QWidget()
+        self.sendCommandTab = QWidget()
+        self.tabs.resize(300,200)
+
+        # Add tabs
+        self.tabs.addTab(self.connectTab,"Conectar")
+        self.tabs.addTab(self.FFTMagTab,"FFT Magnitud")
+        self.tabs.addTab(self.sendCommandTab,"Probar comandos")
+
+        # Create connectTab tab
+        self.connectTab.layout = HorizontalBox()
+
+        self.ConnectBtn = QPushButton("Conectar")
+        self.ConnectBtn.clicked.connect(self.connectButtonClicked)
+        self.connectTab.layout.leftGridLayout.addWidget(self.ConnectBtn, 1, 0)
+
+        self.ExitBtn = QPushButton("Salir")
+        self.ExitBtn.clicked.connect(qApp.quit)
+        self.connectTab.layout.leftGridLayout.addWidget(self.ExitBtn, 2, 0)
+
+        self.connectTab.setLayout(self.connectTab.layout.principalLayout)
+
+        # Create FFTMagTab tab
+        self.FFTMagTab.layout = HorizontalBox()
+
+        self.FFTMagBtn = QPushButton("FFT Magnitud")
+        self.FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
+        self.FFTMagTab.layout.leftGridLayout.addWidget(self.FFTMagBtn, 1, 0)
+
+        self.FFTMagTab.setLayout(self.FFTMagTab.layout.principalLayout)
+
+        # Create sendCommandTab tab
+        self.sendCommandTab.layout = QGridLayout()
+
+        self.send_command = QLabel('Comando: ')
+        self.sendCommandTab.layout.addWidget(self.send_command, 0, 0)
+
+        self.SendBtn = QPushButton("Enviar Comando")
+        self.SendBtn.clicked.connect(self.sendButtonClicked)
+        self.sendCommandTab.layout.addWidget(self.SendBtn, 1, 0)
+
+        self.send_Command_Edit = QLineEdit()
+        self.sendCommandTab.layout.addWidget(self.send_Command_Edit, 0, 1)
+
+        self.command_answer = QLabel(' ')
+        self.sendCommandTab.layout.addWidget(self.command_answer, 1, 1)
+
+        self.sendCommandTab.setLayout(self.sendCommandTab.layout)
+
+        # Add tabs to widget
+        self.layout.addWidget(self.tabs)
+        self.setLayout(self.layout)
+
+
+    @pyqtSlot()
+    def on_click(self):
+        print("\n")
+        for currentQTableWidgetItem in self.tableWidget.selectedItems():
+            print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
 
     def connectButtonClicked (self):
@@ -72,21 +129,30 @@ class ConnecTC_GUI(QMainWindow):
         if self.instrumentList:
             self.instrument = SelectInstrument(self.instrumentList)
 
-        self.statusBar().showMessage(s)
+        self.parent().statusBar().showMessage(s)
 
 
     def FFTMagBtnClicked (self):
         if self.instrumentList:
-            self.statusBar().showMessage("Comenzando la comunicacion")
+            self.parent().statusBar().showMessage("Comenzando la comunicacion")
             # rtn = FFT_Mag_Measure (self.instrument)
             # if rtn == -1:
                 # self.command_answer.setText("No se pudo realizar la medición")
 
         else:
-            self.statusBar().showMessage("Primero debe dar \"Conectar\"")
+            self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             rtn = FFT_Mag_Measure()
 
 
+    def sendButtonClicked (self):
+        if self.instrumentList:
+            self.command = self.send_Command_Edit.text()
+            data = SendCommand (self.instrument, self.command)
+            if data:
+                self.command_answer.setText("Respuesta: " + data)
+
+        else:
+            self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
 
 
 
@@ -120,7 +186,6 @@ class HorizontalBox(QWidget):
 
 
 
-
 def SearchInstrument (self):
     self.instrumentList = []
     # Pedimos la lista de instrumentos
@@ -146,11 +211,12 @@ def SearchInstrument (self):
         return self.auxString, self.instrumentList
 
 
+
 def SelectInstrument (instrumentList):
     return instrumentList[0]
 
 
-#def FFT_Mag_Measure (instrument):
+
 def FFT_Mag_Measure ():
     #FFTMag.core(instrument)
     rtn = FFTMag.AnalyzeFile()
@@ -158,9 +224,16 @@ def FFT_Mag_Measure ():
 
 
 
+def SendCommand (instrument, command):
+    instrument.write(command)
+    if command.find("?") != -1:
+        data = instrument.read()
+        #print("Datos recibidos: " + data)
+        return data
+
+
 
 if __name__ == '__main__':
-
     app = QApplication(sys.argv)
     ex = ConnecTC_GUI()
     sys.exit(app.exec_())
