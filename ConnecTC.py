@@ -13,6 +13,8 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 
+import matplotlib.pyplot as plt
+
 #from Agilent_U8903A import FFT_Magnitude
 import Agilent_U8903A.FFT_Magnitude.core as FFTMag
 
@@ -61,7 +63,7 @@ class MyTableWidget(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
         self.layout = QVBoxLayout(self)
-
+        Tabs(self)
         # Initialize tab screen
         self.tabs = QTabWidget()
         self.connectTab = QWidget()
@@ -75,50 +77,15 @@ class MyTableWidget(QWidget):
         self.tabs.addTab(self.sendCommandTab,"Probar comandos")
 
         # Create connectTab tab
-        self.connectTab.layout = HorizontalBox()
-
-        self.ConnectBtn = QPushButton("Conectar")
-        self.ConnectBtn.clicked.connect(self.connectButtonClicked)
-        self.connectTab.layout.leftGridLayout.addWidget(self.ConnectBtn, 1, 0)
-
-        self.ExitBtn = QPushButton("Salir")
-        self.ExitBtn.clicked.connect(qApp.quit)
-        self.connectTab.layout.leftGridLayout.addWidget(self.ExitBtn, 2, 0)
-
-        self.ImageLabel = QLabel(self)
-        self.pixmap = QPixmap('sources/Pictures/logo1.png')
-        self.ImageLabel.setPixmap(self.pixmap)
-        self.connectTab.layout.rightGridLayout.addWidget(self.ImageLabel, 1, 1)
-
-        #self.connectTab.layout.resize(self.pixmap.width(),self.pixmap.height())
-
+        self.connectTab.layout = Tabs.connectTab(self, self.layout)
         self.connectTab.setLayout(self.connectTab.layout.principalLayout)
 
         # Create FFTMagTab tab
-        self.FFTMagTab.layout = HorizontalBox()
-
-        self.FFTMagBtn = QPushButton("FFT Magnitud")
-        self.FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
-        self.FFTMagTab.layout.leftGridLayout.addWidget(self.FFTMagBtn, 1, 0)
-
+        self.FFTMagTab.layout = Tabs.FFTMagTab(self, self.layout)
         self.FFTMagTab.setLayout(self.FFTMagTab.layout.principalLayout)
 
         # Create sendCommandTab tab
-        self.sendCommandTab.layout = QGridLayout()
-
-        self.send_command = QLabel('Comando: ')
-        self.sendCommandTab.layout.addWidget(self.send_command, 0, 0)
-
-        self.SendBtn = QPushButton("Enviar Comando")
-        self.SendBtn.clicked.connect(self.sendButtonClicked)
-        self.sendCommandTab.layout.addWidget(self.SendBtn, 1, 0)
-
-        self.send_Command_Edit = QLineEdit()
-        self.sendCommandTab.layout.addWidget(self.send_Command_Edit, 0, 1)
-
-        self.command_answer = QLabel(' ')
-        self.sendCommandTab.layout.addWidget(self.command_answer, 1, 1)
-
+        self.sendCommandTab.layout = Tabs.sendCommandTab(self, self.layout)
         self.sendCommandTab.setLayout(self.sendCommandTab.layout)
 
         # Add tabs to widget
@@ -189,9 +156,63 @@ class HorizontalBox(QWidget):
         self.rightFrame.setFrameShape(QFrame.StyledPanel)
         self.rightFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout = QVBoxLayout(self.rightFrame)
-        self.rightGridLayout = QGridLayout()
-        self.verticalLayout.addLayout(self.rightGridLayout)
         self.principalLayout.addWidget(self.rightFrame)
+
+
+
+class Tabs (MyTableWidget):
+
+
+    def __init__(self, parent):
+        super(MyTableWidget, self).__init__(parent)
+
+
+    def FFTMagTab (self, layout):
+        layout = HorizontalBox()
+
+        self.FFTMagBtn = QPushButton("FFT Magnitud")
+        self.FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
+        layout.leftGridLayout.addWidget(self.FFTMagBtn, 1, 0)
+
+        return layout
+
+
+    def connectTab (self, layout):
+        layout = HorizontalBox()
+
+        self.ConnectBtn = QPushButton("Conectar")
+        self.ConnectBtn.clicked.connect(self.connectButtonClicked)
+        layout.leftGridLayout.addWidget(self.ConnectBtn, 1, 0)
+
+        self.ExitBtn = QPushButton("Salir")
+        self.ExitBtn.clicked.connect(qApp.quit)
+        layout.leftGridLayout.addWidget(self.ExitBtn, 2, 0)
+
+        self.ImageLabel = QLabel(self)
+        self.pixmap = QPixmap('sources/Pictures/logo1.png')
+        self.ImageLabel.setPixmap(self.pixmap)
+        layout.verticalLayout.addWidget(self.ImageLabel)
+
+        return layout
+
+    def sendCommandTab (self, layout):
+        layout = QGridLayout()
+
+        self.send_command = QLabel('Comando: ')
+        layout.addWidget(self.send_command, 0, 0)
+
+        self.SendBtn = QPushButton("Enviar Comando")
+        self.SendBtn.clicked.connect(self.sendButtonClicked)
+        layout.addWidget(self.SendBtn, 1, 0)
+
+        self.send_Command_Edit = QLineEdit()
+        layout.addWidget(self.send_Command_Edit, 0, 1)
+
+        self.command_answer = QLabel(' ')
+        layout.addWidget(self.command_answer, 1, 1)
+
+        return layout
+
 
 
 
