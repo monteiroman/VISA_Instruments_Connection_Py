@@ -39,11 +39,12 @@ def StartMeasure(instrument):
     #print(f"type #: {type(message[0])}")
     if message[0] != 35:
         print("No se pudieron obtener los puntos")
-        return
+        return -1
 
     # file = open("RAW_Message", "wb")
     # file.write(message)
     # file.close()
+#return x,y
 
 
 

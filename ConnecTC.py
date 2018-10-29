@@ -45,7 +45,7 @@ class ConnecTC_GUI(QMainWindow):
         self.left = 200
         self.top = 100
         self.width = 1000
-        self.height = 500
+        self.height = 600
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         # for the subplot
@@ -271,8 +271,8 @@ def PlotSobplot (figure):
     ax = figure.add_subplot(111)
     ax.clear()
     ax.grid(True)
-    ax.set_xlabel('Frequency [Hz]')
-    ax.set_ylabel('Magnitude [dB]')
+    ax.set_xlabel('Frecuencia [Hz]')
+    ax.set_ylabel('Magnitud [dB]')
     ax.set_title("FFT Magnitud")
 
     return ax
