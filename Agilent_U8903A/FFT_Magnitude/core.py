@@ -87,14 +87,14 @@ def AnalyzeFile():
     np.put(x,index,filler)
 
 
-    plt.plot(x, y)
-    plt.grid(True)
-    plt.xlabel('Frequency [Hz]')
-    plt.ylabel('Magnitude [dB]')
-    plt.title('FFT')
-    plt.show()
+    # plt.plot(x, y)
+    # plt.grid(True)
+    # plt.xlabel('Frequency [Hz]')
+    # plt.ylabel('Magnitude [dB]')
+    # plt.title('FFT')
+    # plt.show()
 
-    return 1
+    return x,y
 
 # This main is left for debugging the measure file
 if __name__ == '__main__':

@@ -13,6 +13,9 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 #from Agilent_U8903A import FFT_Magnitude
@@ -45,6 +48,10 @@ class ConnecTC_GUI(QMainWindow):
         self.height = 500
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+        # for the subplot
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.table_widget = MyTableWidget(self)
         self.setCentralWidget(self.table_widget)
@@ -117,7 +124,11 @@ class MyTableWidget(QWidget):
 
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
-            rtn = FFT_Mag_Measure()
+            x,y = FFT_Mag_Measure()
+            ax = PlotSobplot(self.parent().figure)
+
+            ax.plot(x,y)
+            self.parent().canvas.draw()
 
 
     def sendButtonClicked (self):
@@ -173,6 +184,9 @@ class Tabs (MyTableWidget):
         self.FFTMagBtn = QPushButton("FFT Magnitud")
         self.FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
         layout.leftGridLayout.addWidget(self.FFTMagBtn, 1, 0)
+
+        layout.verticalLayout.addWidget(self.parent().toolbar)
+        layout.verticalLayout.addWidget(self.parent().canvas)
 
         return layout
 
@@ -249,9 +263,19 @@ def SelectInstrument (instrumentList):
 
 def FFT_Mag_Measure ():
     #FFTMag.core(instrument)
-    rtn = FFTMag.AnalyzeFile()
-    return 1
+    x,y = FFTMag.AnalyzeFile()
 
+    return x,y
+
+def PlotSobplot (figure):
+    ax = figure.add_subplot(111)
+    ax.clear()
+    ax.grid(True)
+    ax.set_xlabel('Frequency [Hz]')
+    ax.set_ylabel('Magnitude [dB]')
+    ax.set_title("FFT Magnitud")
+
+    return ax
 
 
 def SendCommand (instrument, command):
