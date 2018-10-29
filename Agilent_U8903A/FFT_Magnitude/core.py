@@ -52,20 +52,20 @@ def AnalyzeFile():
 
     import struct
 
-    file = open("RAW_Message", "rb")
-    message = file.read()
+    with open("RAW_Message", "rb") as file:
+        message = file.read()
     file.close()
 
     # convert ascii to int. First number of the file
     digits = message[1:2][0] - 48
-    #print(f"type digits: {type(digits)} = {digits}")
+    print(f"type digits: {type(digits)} = {digits}")
 
     # extract the number of bytecount
     count = message[2:2+digits]
     #print(f"type count: {type(count)} = {count}")
     # convert bytes to string
     bytecount = count.decode("utf-8")
-    #print(f"type count: {type(aux)} = {aux}")
+    print(f"type count: {type(bytecount)} = {bytecount}")
 
     # string2int
     bytecount = int(bytecount)
@@ -73,14 +73,22 @@ def AnalyzeFile():
 
     # file info data chop
     bytesData = message[2+digits:-1]
+    print(f"type count: {type(bytesData)}")
 
     # converts file bytes in floats
-    y = []
-    for i in range(0, len(bytesData), 4):
-        packed = bytesData[i:i+4]
-        unpacked = struct.unpack("f", packed)
-        y.append(unpacked[0])
-
+    # y = []
+    # for i in range(0, len(bytesData), 4):
+    #     packed = bytesData[i:i+4]
+    #     y.append(packed)
+    #     # unpacked = struct.unpack("f", packed)
+    #     # y.append(unpacked[0])
+    # print (y)
+    # print (len(y))
+    #y = str(y)
+    y = np.frombuffer(bytesData, dtype=np.int32, count=256, offset=0)
+    y = y.newbyteorder()
+    print (y)
+    print (len(y))
 
     x = np.empty(256)
     filler = np.arange(0,256,1)
