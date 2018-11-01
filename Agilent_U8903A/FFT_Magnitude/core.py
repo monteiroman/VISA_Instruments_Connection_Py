@@ -85,9 +85,8 @@ def AnalyzeFile():
     # print (y)
     # print (len(y))
     #y = str(y)
-    y = np.frombuffer(bytesData, dtype=np.int32, count=256, offset=0)
+    y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
     y = y.newbyteorder()
-    y = y.astype(float)
     print (y)
     print (len(y))
 

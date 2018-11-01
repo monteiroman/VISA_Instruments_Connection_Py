@@ -1,8 +1,6 @@
 U8903 User Manual.pdf
 U8903-ProgramRef.pdf
-/Libreria/__pycache__
 /instrumentacion_virtual-master
 BtnExample.py
 widgets_example.py
-Agilent_U8903A/FFT_Magnitude/__pycache__
-Agilent_U8903A/__pycache__
+__pycache__
