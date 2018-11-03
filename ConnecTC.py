@@ -37,18 +37,16 @@ LINEAR_SWEEP = 1
 
 class ConnecTC_GUI(QMainWindow):
 
-
     def __init__(self):
         super().__init__()
         self.initUI()
-
 
     def initUI(self):
         self.title = 'Sistema de medición ConnecTC'
         self.left = 200
         self.top = 100
-        self.width = 1000
-        self.height = 600
+        self.width = 1300
+        self.height = 700
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
@@ -59,10 +57,7 @@ class ConnecTC_GUI(QMainWindow):
 
         self.show()
 
-
-
 class MyTableWidget(QWidget):
-
 
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
@@ -106,13 +101,11 @@ class MyTableWidget(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
-
     @pyqtSlot()
     def on_click(self):
         print("\n")
         for currentQTableWidgetItem in self.tableWidget.selectedItems():
             print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
-
 
     def connectButtonClicked (self):
         s, self.instrumentList = SearchInstrument(self)
@@ -120,7 +113,6 @@ class MyTableWidget(QWidget):
             self.instrument = SelectInstrument(self.instrumentList)
 
         self.parent().statusBar().showMessage(s)
-
 
     def FFTMagBtnClicked (self, points):
         if self.instrumentList:
@@ -142,7 +134,6 @@ class MyTableWidget(QWidget):
             ax.plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
 
-
     def sendButtonClicked (self):
         if self.instrumentList:
             self.command = self.send_Command_Edit.text()
@@ -161,38 +152,7 @@ class MyTableWidget(QWidget):
         self.canvasHandlers["linearSweep"].figure.canvas.draw()
         return
 
-
-
-class HorizontalBox(QWidget):
-
-
-    def __init__(self):
-        super().__init__()
-        self.initBox()
-
-
-    def initBox(self):
-
-        self.principalLayout = QHBoxLayout(self)
-        #___________Left Frame___________
-        self.leftFrame = QFrame(self)
-        self.leftFrame.setFrameShape(QFrame.StyledPanel)
-        self.leftFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout = QVBoxLayout(self.leftFrame)
-        self.leftGridLayout = QGridLayout()
-        self.verticalLayout.addLayout(self.leftGridLayout)
-        self.principalLayout.addWidget(self.leftFrame)
-        #___________Right Frame___________
-        self.rightFrame = QFrame(self)
-        self.rightFrame.setFrameShape(QFrame.StyledPanel)
-        self.rightFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout = QVBoxLayout(self.rightFrame)
-        self.principalLayout.addWidget(self.rightFrame)
-
-
-
 class Tabs (MyTableWidget):
-
 
     def __init__(self, parent):
         super(MyTableWidget, self).__init__(parent)
@@ -214,7 +174,6 @@ class Tabs (MyTableWidget):
         layout.verticalLayout.addWidget(self.ImageLabel)
 
         return layout
-
 
     def FFTMagTab_layout (self, layout):
         layout = HorizontalBox()
@@ -239,13 +198,27 @@ class Tabs (MyTableWidget):
 
         return layout
 
-
     def linearSweepTab_layout (self, layout):
         layout = HorizontalBox()
 
-        self.FFTMag256Btn = QPushButton("Iniciar Sweep")
-        self.FFTMag256Btn.clicked.connect(lambda: self.sweepBtnClicked())
-        layout.leftGridLayout.addWidget(self.FFTMag256Btn, 1, 0)
+        self.sweepLabel = QLabel('Datos para el Sweep')
+        layout.leftGridLayout.addWidget(self.sweepLabel, 1, 1)
+
+        self.startFreqLabel = QLabel('Frecuencia de inicio: ')
+        layout.leftGridLayout.addWidget(self.startFreqLabel, 2, 1)
+
+        self.startFreq_Edit = QLineEdit()
+        layout.leftGridLayout.addWidget(self.startFreq_Edit, 2, 2)
+
+        self.endFreqLabel = QLabel('Frecuencia final: ')
+        layout.leftGridLayout.addWidget(self.endFreqLabel, 3, 1)
+
+        self.endFreq_Edit = QLineEdit()
+        layout.leftGridLayout.addWidget(self.endFreq_Edit, 3, 2)
+
+        self.initSweep = QPushButton("Iniciar Sweep")
+        self.initSweep.clicked.connect(lambda: self.sweepBtnClicked())
+        layout.leftGridLayout.addWidget(self.initSweep, 4, 1, 2, 1)
 
         canvas = FigureCanvas(plt.figure())
         toolbar = NavigationToolbar(canvas, self)
@@ -254,7 +227,6 @@ class Tabs (MyTableWidget):
         self.canvasHandlers["linearSweep"] = canvas
 
         return layout
-
 
     def sendCommandTab_layout (self, layout):
         layout = QGridLayout()
@@ -274,8 +246,29 @@ class Tabs (MyTableWidget):
 
         return layout
 
+class HorizontalBox(QWidget):
 
+    def __init__(self):
+        super().__init__()
+        self.initBox()
 
+    def initBox(self):
+
+        self.principalLayout = QHBoxLayout(self)
+        #___________Left Frame___________
+        self.leftFrame = QFrame(self)
+        self.leftFrame.setFrameShape(QFrame.StyledPanel)
+        self.leftFrame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout = QVBoxLayout(self.leftFrame)
+        self.leftGridLayout = QGridLayout()
+        self.verticalLayout.addLayout(self.leftGridLayout)
+        self.principalLayout.addWidget(self.leftFrame)
+        #___________Right Frame___________
+        self.rightFrame = QFrame(self)
+        self.rightFrame.setFrameShape(QFrame.StyledPanel)
+        self.rightFrame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout = QVBoxLayout(self.rightFrame)
+        self.principalLayout.addWidget(self.rightFrame)
 
 def SearchInstrument (self):
     self.instrumentList = []
@@ -283,7 +276,6 @@ def SearchInstrument (self):
     rm=visa.ResourceManager('@py')
     #print(rm.list_resources('?*'))
     #print(rm.list_resources())
-
     if rm.list_resources():
         s = ("")
         for resource_obj in rm.list_resources():
@@ -301,17 +293,12 @@ def SearchInstrument (self):
         self.auxString = "No hay dispositivos para conectarse"
         return self.auxString, self.instrumentList
 
-
-
 def SelectInstrument (instrumentList):
     return instrumentList[0]
-
-
 
 def FFT_Mag_Measure (instrument, points):
     # FFTMag.core(instrument, points)
     x,y = FFTMag.AnalyzeFile(points)
-
     return x,y
 
 def PlotSobplot (figure, graphType):
@@ -330,15 +317,12 @@ def PlotSobplot (figure, graphType):
 
     return ax
 
-
 def SendCommand (instrument, command):
     instrument.write(command)
     if command.find("?") != -1:
         data = instrument.read()
         #print("Datos recibidos: " + data)
         return data
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
