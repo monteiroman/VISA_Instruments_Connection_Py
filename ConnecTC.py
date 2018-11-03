@@ -208,17 +208,19 @@ class Tabs (MyTableWidget):
         layout.leftGridLayout.addWidget(self.startFreqLabel, 2, 1)
 
         self.startFreq_Edit = QLineEdit()
+        self.startFreq_Edit.setMaximumWidth(80)
         layout.leftGridLayout.addWidget(self.startFreq_Edit, 2, 2)
 
         self.endFreqLabel = QLabel('Frecuencia final: ')
         layout.leftGridLayout.addWidget(self.endFreqLabel, 3, 1)
 
         self.endFreq_Edit = QLineEdit()
+        self.endFreq_Edit.setMaximumWidth(80)
         layout.leftGridLayout.addWidget(self.endFreq_Edit, 3, 2)
 
         self.initSweep = QPushButton("Iniciar Sweep")
         self.initSweep.clicked.connect(lambda: self.sweepBtnClicked())
-        layout.leftGridLayout.addWidget(self.initSweep, 4, 1, 2, 1)
+        layout.leftGridLayout.addWidget(self.initSweep, 4, 1, 4, 2)
 
         canvas = FigureCanvas(plt.figure())
         toolbar = NavigationToolbar(canvas, self)
