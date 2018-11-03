@@ -30,6 +30,9 @@ sys.path.insert(0, 'Libreria')
 # Traemos la clase base que implmenta las funciones de VISA
 from instrument import Instrument
 
+FFT_MAG = 0
+LINEAR_SWEEP = 1
+
 
 
 class ConnecTC_GUI(QMainWindow):
@@ -48,10 +51,6 @@ class ConnecTC_GUI(QMainWindow):
         self.height = 600
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-        # for the subplot
-        self.figure = Figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.table_widget = MyTableWidget(self)
         self.setCentralWidget(self.table_widget)
@@ -64,35 +63,43 @@ class ConnecTC_GUI(QMainWindow):
 
 class MyTableWidget(QWidget):
 
-    instrumentList = []
-
 
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
+        self.instrument = 0
+        self.instrumentList = []
+        self.canvasHandlers = {}
+
         self.layout = QVBoxLayout(self)
         Tabs(self)
         # Initialize tab screen
         self.tabs = QTabWidget()
         self.connectTab = QWidget()
         self.FFTMagTab = QWidget()
+        self.linearSweepTab = QWidget()
         self.sendCommandTab = QWidget()
         self.tabs.resize(300,200)
 
         # Add tabs
         self.tabs.addTab(self.connectTab,"Conectar")
         self.tabs.addTab(self.FFTMagTab,"FFT Magnitud")
+        self.tabs.addTab(self.linearSweepTab,"Sweep Lineal")
         self.tabs.addTab(self.sendCommandTab,"Probar comandos")
 
         # Create connectTab tab
-        self.connectTab.layout = Tabs.connectTab(self, self.layout)
+        self.connectTab.layout = Tabs.connectTab_layout(self, self.layout)
         self.connectTab.setLayout(self.connectTab.layout.principalLayout)
 
         # Create FFTMagTab tab
-        self.FFTMagTab.layout = Tabs.FFTMagTab(self, self.layout)
+        self.FFTMagTab.layout = Tabs.FFTMagTab_layout(self, self.layout)
         self.FFTMagTab.setLayout(self.FFTMagTab.layout.principalLayout)
 
+        # Create linearSweep tab
+        self.linearSweepTab.layout = Tabs.linearSweepTab_layout(self, self.layout)
+        self.linearSweepTab.setLayout(self.linearSweepTab.layout.principalLayout)
+
         # Create sendCommandTab tab
-        self.sendCommandTab.layout = Tabs.sendCommandTab(self, self.layout)
+        self.sendCommandTab.layout = Tabs.sendCommandTab_layout(self, self.layout)
         self.sendCommandTab.setLayout(self.sendCommandTab.layout)
 
         # Add tabs to widget
@@ -115,20 +122,25 @@ class MyTableWidget(QWidget):
         self.parent().statusBar().showMessage(s)
 
 
-    def FFTMagBtnClicked (self):
+    def FFTMagBtnClicked (self, points):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion")
-            # rtn = FFT_Mag_Measure (self.instrument)
-            # if rtn == -1:
-                # self.command_answer.setText("No se pudo realizar la medición")
+            rtn = FFT_Mag_Measure (self.instrument, points)
+            if rtn == -1:
+                self.parent().statusBar().showMessage("No se pudo realizar la medición")
+                return
+
+            x,y = FFT_Mag_Measure()
+            ax = PlotSobplot(self.parent().figure, "FFT_Mag")
+            ax.plot(x,y)
+            self.parent().canvas.draw()
 
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
-            x,y = FFT_Mag_Measure()
-            ax = PlotSobplot(self.parent().figure)
-
+            x,y = FFT_Mag_Measure(self.instrument, points)
+            ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax.plot(x,y)
-            self.parent().canvas.draw()
+            self.canvasHandlers["fftMag"].figure.canvas.draw()
 
 
     def sendButtonClicked (self):
@@ -140,6 +152,14 @@ class MyTableWidget(QWidget):
 
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
+
+    def sweepBtnClicked (self):
+        points = 256
+        x,y = FFT_Mag_Measure(self.instrument, points)
+        ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
+        ax.plot(x,y)
+        self.canvasHandlers["linearSweep"].figure.canvas.draw()
+        return
 
 
 
@@ -177,21 +197,7 @@ class Tabs (MyTableWidget):
     def __init__(self, parent):
         super(MyTableWidget, self).__init__(parent)
 
-
-    def FFTMagTab (self, layout):
-        layout = HorizontalBox()
-
-        self.FFTMagBtn = QPushButton("FFT Magnitud")
-        self.FFTMagBtn.clicked.connect(self.FFTMagBtnClicked)
-        layout.leftGridLayout.addWidget(self.FFTMagBtn, 1, 0)
-
-        layout.verticalLayout.addWidget(self.parent().toolbar)
-        layout.verticalLayout.addWidget(self.parent().canvas)
-
-        return layout
-
-
-    def connectTab (self, layout):
+    def connectTab_layout (self, layout):
         layout = HorizontalBox()
 
         self.ConnectBtn = QPushButton("Conectar")
@@ -209,7 +215,48 @@ class Tabs (MyTableWidget):
 
         return layout
 
-    def sendCommandTab (self, layout):
+
+    def FFTMagTab_layout (self, layout):
+        layout = HorizontalBox()
+
+        self.FFTMag256Btn = QPushButton("256 Puntos")
+        self.FFTMag256Btn.clicked.connect(lambda: self.FFTMagBtnClicked(256))
+        layout.leftGridLayout.addWidget(self.FFTMag256Btn, 1, 0)
+
+        self.FFTMag512Btn = QPushButton("512 Puntos")
+        self.FFTMag512Btn.clicked.connect(lambda: self.FFTMagBtnClicked(512))
+        layout.leftGridLayout.addWidget(self.FFTMag512Btn, 2, 0)
+
+        self.FFTMag1024Btn = QPushButton("1024 Puntos")
+        self.FFTMag1024Btn.clicked.connect(lambda: self.FFTMagBtnClicked(1024))
+        layout.leftGridLayout.addWidget(self.FFTMag1024Btn, 3, 0)
+
+        canvas = FigureCanvas(plt.figure())
+        toolbar = NavigationToolbar(canvas, self)
+        layout.verticalLayout.addWidget(toolbar)
+        layout.verticalLayout.addWidget(canvas)
+        self.canvasHandlers["fftMag"] = canvas
+
+        return layout
+
+
+    def linearSweepTab_layout (self, layout):
+        layout = HorizontalBox()
+
+        self.FFTMag256Btn = QPushButton("Iniciar Sweep")
+        self.FFTMag256Btn.clicked.connect(lambda: self.sweepBtnClicked())
+        layout.leftGridLayout.addWidget(self.FFTMag256Btn, 1, 0)
+
+        canvas = FigureCanvas(plt.figure())
+        toolbar = NavigationToolbar(canvas, self)
+        layout.verticalLayout.addWidget(toolbar)
+        layout.verticalLayout.addWidget(canvas)
+        self.canvasHandlers["linearSweep"] = canvas
+
+        return layout
+
+
+    def sendCommandTab_layout (self, layout):
         layout = QGridLayout()
 
         self.send_command = QLabel('Comando: ')
@@ -261,19 +308,25 @@ def SelectInstrument (instrumentList):
 
 
 
-def FFT_Mag_Measure ():
-    #FFTMag.core(instrument)
-    x,y = FFTMag.AnalyzeFile()
+def FFT_Mag_Measure (instrument, points):
+    # FFTMag.core(instrument, points)
+    x,y = FFTMag.AnalyzeFile(points)
 
     return x,y
 
-def PlotSobplot (figure):
-    ax = figure.add_subplot(111)
+def PlotSobplot (figure, graphType):
+    ax = figure.figure.add_subplot(111)
     ax.clear()
     ax.grid(True)
     ax.set_xlabel('Frecuencia [Hz]')
-    ax.set_ylabel('Magnitud [dB]')
-    ax.set_title("FFT Magnitud")
+
+    if graphType == FFT_MAG:
+        ax.set_ylabel('Magnitud [dB]')
+        ax.set_title("FFT Magnitud")
+
+    if graphType == LINEAR_SWEEP:
+        ax.set_ylabel('Magnitud [dB]')
+        ax.set_title("FFT Magnitud")
 
     return ax
 

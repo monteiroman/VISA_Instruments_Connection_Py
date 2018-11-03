@@ -21,11 +21,14 @@ sys.path.insert(0, 'Libreria')
 from instrument import Instrument
 
 
-def StartMeasure(instrument):
+def StartMeasure(instrument, points):
+
     instrument.write("DISP:ANAL:MODE MAGN")
-    instrument.write("SENS:WAV:POIN 256")
+    setPoints = "SENS:WAV:POIN " + str(points)
+    instrument.write(setPoints)
     instrument.write("TRIG:GRAP:SOUR IMM")
     instrument.write("INIT:GRAP (@1)")
+
     aux = "1"
     while int(aux) is not 0:
         instrument.write("STAT:OPER:COND?")
@@ -44,11 +47,42 @@ def StartMeasure(instrument):
     # file = open("RAW_Message", "wb")
     # file.write(message)
     # file.close()
-#return x,y
+
+    # convert ascii to int. First number of the file
+    digits = message[1:2][0] - 48
+    print(f"type digits: {type(digits)} = {digits}")
+
+    # extract the number of bytecount
+    count = message[2:2+digits]
+    #print(f"type count: {type(count)} = {count}")
+    # convert bytes to string
+    bytecount = count.decode("utf-8")
+    print(f"type count: {type(bytecount)} = {bytecount}")
+
+    # string2int
+    bytecount = int(bytecount)
+    #print(f"type count: {type(aux)} = {aux}")
+
+    # file info data chop
+    bytesData = message[2+digits:-1]
+    print(f"type count: {type(bytesData)}")
+
+    y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
+    y = y.newbyteorder()
+    print (y)
+    print (len(y))
+
+    x = np.empty(points)
+    filler = np.arange(0,points,1)
+    index = np.arange(x.size)
+    np.put(x,index,filler)
+
+    return x,y
 
 
 
-def AnalyzeFile():
+
+def AnalyzeFile(points):
 
     import struct
 
@@ -88,7 +122,7 @@ def AnalyzeFile():
     y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
     y = y.newbyteorder()
     print (y)
-    print (len(y))
+    # print (len(y))
 
     x = np.empty(256)
     filler = np.arange(0,256,1)
@@ -102,7 +136,6 @@ def AnalyzeFile():
     # plt.ylabel('Magnitude [dB]')
     # plt.title('FFT')
     # plt.show()
-
     return x,y
 
 # This main is left for debugging the measure file
