@@ -1,1 +1,1 @@
-from Agilent_U8903A.FFT_Magnitude import LinearSweep_core
+from Agilent_U8903A.Linear_Sweep import LinearSweep_core

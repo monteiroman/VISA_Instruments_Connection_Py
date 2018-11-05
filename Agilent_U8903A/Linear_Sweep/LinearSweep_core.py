@@ -21,7 +21,7 @@ sys.path.insert(0, 'Libreria')
 from instrument import Instrument
 
 
-def StartMeasure(instrument, startFreq, endFreq, stepSize=100, outVolt=1, dwellTimeMS=1000):
+def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
 
     instrument.write("SOUR:SWE:INT ANAL")           # Sets the sweep generator interface to analog.
     instrument.write("SOUR:FUNC SINE, (@1)")        # Sets the generator waveform type to sine on channel 1.
@@ -48,7 +48,7 @@ def StartMeasure(instrument, startFreq, endFreq, stepSize=100, outVolt=1, dwellT
     instrument.write("SENS:FUNC2 VAC, (@2)")        # Sets the measurement function 2 to Vac.
     instrument.write("INIT:SWE")                    # Initiates the sweep.
     aux = "1"
-    while int(aux) is not 0:                        #Polls the status register to check if the measuring operation
+    while int(aux) is not 0:                        # Polls the status register to check if the measuring operation
         instrument.write("STAT:OPER:COND?")         # has completed. The condition register will return 0 if the
         aux = instrument.read()                     # operation has completed.
         print(aux)
@@ -56,18 +56,63 @@ def StartMeasure(instrument, startFreq, endFreq, stepSize=100, outVolt=1, dwellT
     instrument.write("SOUR:SWE:VAL? (@2)")          # Acquires the X- axis sweep points values.
     xValues = instrument.read_raw()
     instrument.write("FETC:SWE? FUNC1, (@2)")       # Acquires the sweep result for function 1.
-    frecValues = instrument.read_raw()
+    freqValues = instrument.read_raw()
     instrument.write("FETC:SWE? FUNC2, (@2)")       # Acquires the sweep result for function 2
     vacValues = instrument.read_raw()
 
     #print(f"type #: {type(message[0])}")
-    if xValues[0] != 35 or frecValues != 35 or vacValues != 35:
+    if xValues[0] != 35 or freqValues != 35 or vacValues != 35:
         print("No se pudieron obtener los puntos")
-        return -1
+        # return -1
+
+    print("xValues: ")
+    print(xValues)
+    print("freqValues: ")
+    print(freqValues)
+    print("vacValues: ")
+    print(vacValues)
 
     # file = open("RAW_Message", "wb")
-    # file.write(message)
+    # file.write(xValues)
+    # file.write(freqValues)
+    # file.write(vacValues)
     # file.close()
+
+    # # convert ascii to int. First number of the file
+    # digits = message[1:2][0] - 48
+    # print(f"type digits: {type(digits)} = {digits}")
+    #
+    # # extract the number of bytecount
+    # count = message[2:2+digits]
+    # #print(f"type count: {type(count)} = {count}")
+    # # convert bytes to string
+    # bytecount = count.decode("utf-8")
+    # print(f"type count: {type(bytecount)} = {bytecount}")
+    # bytecount = int(bytecount)
+    # #print(f"type count: {type(aux)} = {aux}")
+    # # file info data chop
+    # bytesData = message[2+digits:-1]
+    # print(f"type count: {type(bytesData)}")
+
+    # y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
+    # y = y.newbyteorder()
+    # print (y)
+    # print (len(y))
+    #
+    # x = np.empty(points)
+    # filler = np.arange(0,points,1)
+    # index = np.arange(x.size)
+    # np.put(x,index,filler)
+
+    # return x,y
+
+def AnalyzeFile(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
+
+    import struct
+
+    with open("RAW_Message", "rb") as file:
+        message = file.read()
+    file.close()
 
     # convert ascii to int. First number of the file
     digits = message[1:2][0] - 48
@@ -88,14 +133,37 @@ def StartMeasure(instrument, startFreq, endFreq, stepSize=100, outVolt=1, dwellT
     bytesData = message[2+digits:-1]
     print(f"type count: {type(bytesData)}")
 
-    # y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
-    # y = y.newbyteorder()
+    # converts file bytes in floats
+    # y = []
+    # for i in range(0, len(bytesData), 4):
+    #     packed = bytesData[i:i+4]
+    #     y.append(packed)
+    #     # unpacked = struct.unpack("f", packed)
+    #     # y.append(unpacked[0])
     # print (y)
     # print (len(y))
-    #
-    # x = np.empty(points)
-    # filler = np.arange(0,points,1)
-    # index = np.arange(x.size)
-    # np.put(x,index,filler)
+    #y = str(y)
+    y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
+    y = y.newbyteorder()
+    print (y)
+    # print (len(y))
 
-    # return x,y
+    x = np.empty(256)
+    filler = np.arange(0,256,1)
+    index = np.arange(x.size)
+    np.put(x,index,filler)
+
+
+    # plt.plot(x, y)
+    # plt.grid(True)
+    # plt.xlabel('Frequency [Hz]')
+    # plt.ylabel('Magnitude [dB]')
+    # plt.title('FFT')
+    # plt.show()
+    print(startFreq)
+    print(endFreq)
+    print(stepSize)
+    print(outVolt)
+    print(dwellTimeMS)
+
+    return x,y,1

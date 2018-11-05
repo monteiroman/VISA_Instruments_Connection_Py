@@ -21,7 +21,7 @@ sys.path.insert(0, 'Libreria')
 from instrument import Instrument
 
 
-def StartMeasure(instrument, points):
+def StartMeasure(instrument, points=256):
 
     instrument.write("DISP:ANAL:MODE MAGN")
     setPoints = "SENS:WAV:POIN " + str(points)
@@ -42,7 +42,7 @@ def StartMeasure(instrument, points):
     #print(f"type #: {type(message[0])}")
     if message[0] != 35:
         print("No se pudieron obtener los puntos")
-        return -1
+        return 0,0,-1
 
     # file = open("RAW_Message", "wb")
     # file.write(message)
@@ -77,12 +77,12 @@ def StartMeasure(instrument, points):
     index = np.arange(x.size)
     np.put(x,index,filler)
 
-    return x,y
+    return x,y,1
 
 
 
 
-def AnalyzeFile(points):
+def AnalyzeFile(points=256):
 
     import struct
 
@@ -136,7 +136,8 @@ def AnalyzeFile(points):
     # plt.ylabel('Magnitude [dB]')
     # plt.title('FFT')
     # plt.show()
-    return x,y
+    print(points)
+    return x,y,1
 
 # This main is left for debugging the measure file
 if __name__ == '__main__':
