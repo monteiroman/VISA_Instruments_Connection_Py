@@ -79,9 +79,6 @@ def StartMeasure(instrument, points=256):
 
     return x,y,1
 
-
-
-
 def AnalyzeFile(points=256):
 
     import struct
@@ -128,7 +125,6 @@ def AnalyzeFile(points=256):
     filler = np.arange(0,256,1)
     index = np.arange(x.size)
     np.put(x,index,filler)
-
 
     # plt.plot(x, y)
     # plt.grid(True)

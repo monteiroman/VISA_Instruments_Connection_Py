@@ -45,8 +45,8 @@ class ConnecTC_GUI(QMainWindow):
         self.title = "Sistema de medición ConnecTC"
         self.left = 200
         self.top = 100
-        self.width = 1300
-        self.height = 700
+        self.width = 1000
+        self.height = 500
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
@@ -111,12 +111,12 @@ class MyTableWidget(QWidget):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion")
             x,y,status = FFT_Mag_Measure (self.instrument, points)
-            if rtn == -1:
+            if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax.plot(x,y)
-            self.parent().canvas.draw()
+            self.canvasHandlers["fftMag"].figure.canvas.draw()
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             x,y,status = FFT_Mag_Measure(self.instrument, points)
@@ -158,8 +158,9 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
+            ax.set_xscale("log")
             ax.plot(x,y)
-            self.parent().canvas.draw()
+            self.canvasHandlers["linearSweep"].figure.canvas.draw()
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             self.startFreq = self.startFreq_Edit.text()
@@ -181,6 +182,7 @@ class MyTableWidget(QWidget):
                 return
             x,y,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
+            ax.set_xscale("log")
             ax.plot(x,y)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
         return
@@ -366,12 +368,12 @@ def SelectInstrument (instrumentList):
     return instrumentList[0]
 
 def FFT_Mag_Measure (instrument, points=256):
-    # x,y = FFTMag.StartMeasure(instrument, points)
-    x,y,status = FFTMag.AnalyzeFile(points)
+    x,y,status = FFTMag.StartMeasure(instrument, points)
+    #x,y,status = FFTMag.AnalyzeFile(points)
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
-    # x,y = LinearSweep.StartMeasure(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
+    # x,y,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
     x,y,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
     return x,y,status
 
