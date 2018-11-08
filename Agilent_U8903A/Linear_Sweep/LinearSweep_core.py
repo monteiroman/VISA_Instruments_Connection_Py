@@ -74,18 +74,21 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
 def AnalyzeFile(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
 
     # Open file and read lines for debugging
-    lines = [line.rstrip('\n') for line in open('RAW_Message')]
+    lines = [line.rstrip('\n') for line in open('RAW_Message2')]
 
     xValues = lines[0]
     freqValues = lines[1]
     vacValues = lines[2]
 
-    x = xValues.split(",")
-    y = vacValues.split(",")
-    x = [float(i) for i in x]
-    print(x)
-    y = [float(i) for i in y]
-    print(y)
-    print(f"type y: {type(y)}")
+    xVal = xValues.split(",")
+    freqVal = freqValues.split(",")
+    vacVal = vacValues.split(",")
+    xVal = [float(i) for i in xVal]
+    print(xVal)
+    freqVal = [float(i) for i in freqVal]
+    print(freqVal)
+    vacVal = [float(i) for i in vacVal]
+    print(vacVal)
+    print(f"type y: {type(vacVal)}")
 
-    return x,y,1
+    return xVal,freqVal,vacVal,1

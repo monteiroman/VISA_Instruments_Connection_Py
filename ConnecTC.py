@@ -45,8 +45,8 @@ class ConnecTC_GUI(QMainWindow):
         self.title = "Sistema de medición ConnecTC"
         self.left = 200
         self.top = 100
-        self.width = 1000
-        self.height = 500
+        self.width = 1200
+        self.height = 700
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
@@ -115,13 +115,13 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
-            ax.plot(x,y)
+            ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             x,y,status = FFT_Mag_Measure(self.instrument, points)
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
-            ax.plot(x,y)
+            ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
 
     def sendButtonClicked (self):
@@ -158,8 +158,8 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
-            ax.set_xscale("log")
-            ax.plot(x,y)
+            ax[0].plot(x,y)
+            ax[1].plot(x,m)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
@@ -180,10 +180,10 @@ class MyTableWidget(QWidget):
             if int(self.outVolt) > 20:
                 self.parent().statusBar().showMessage("La tension de salida tiene un rango de 1 a 20 volts")
                 return
-            x,y,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            x,y,m,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
-            ax.set_xscale("log")
-            ax.plot(x,y)
+            ax[0].plot(x,y)
+            ax[1].plot(x,m)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
         return
 
@@ -295,8 +295,8 @@ class Tabs (MyTableWidget):
 
         canvas = FigureCanvas(plt.figure())
         toolbar = NavigationToolbar(canvas, self)
-        layout.verticalLayout.addWidget(toolbar)
         layout.verticalLayout.addWidget(canvas)
+        layout.verticalLayout.addWidget(toolbar)
         self.canvasHandlers["linearSweep"] = canvas
 
         return layout
@@ -368,26 +368,38 @@ def SelectInstrument (instrumentList):
     return instrumentList[0]
 
 def FFT_Mag_Measure (instrument, points=256):
-    x,y,status = FFTMag.StartMeasure(instrument, points)
-    #x,y,status = FFTMag.AnalyzeFile(points)
+    # x,y,status = FFTMag.StartMeasure(instrument, points)
+    x,y,status = FFTMag.AnalyzeFile(points)
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
     # x,y,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
-    x,y,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
-    return x,y,status
+    x,y,m,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
+    return x,y,m,status
 
 def PlotSobplot (figure, graphType):
-    ax = figure.figure.add_subplot(111)
-    ax.clear()
-    ax.grid(True)
-    ax.set_xlabel("Frecuencia [Hz]")
+    ax = []
     if graphType == FFT_MAG:
-        ax.set_ylabel("Magnitud [dB]")
-        ax.set_title("FFT Magnitud")
+        ax.append(figure.figure.add_subplot(111))
+        ax[0].clear()
+        ax[0].grid(True)
+        ax[0].set_xlabel("Frecuencia [Hz]")
+        ax[0].set_ylabel("Magnitud [dB]")
+        ax[0].set_title("FFT Magnitud")
     if graphType == LINEAR_SWEEP:
-        ax.set_ylabel("Magnitud [dB]")
-        ax.set_title("Barrido en fecuencia")
+        ax.append(figure.figure.add_subplot(211))
+        ax[0].clear()
+        ax[0].grid(True)
+        # ax[0].set_xscale("log")
+        ax[0].set_xlabel("Frecuencia [Hz]")
+        ax[0].set_ylabel("Magnitud [dB]")
+        ax[0].set_title("Barrido en fecuencia")
+        ax.append(figure.figure.add_subplot(212))
+        ax[1].clear()
+        ax[1].grid(True)
+        ax[1].set_xscale("log")
+        ax[1].set_xlabel("Frecuencia [Hz]")
+        ax[1].set_ylabel("Magnitud [dB]")
     return ax
 
 def SendCommand (instrument, command):
