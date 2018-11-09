@@ -61,15 +61,18 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     instrument.write("FETC:SWE? FUNC2, (@2)")       # Acquires the sweep result for function 2
     vacValues = instrument.read_raw()
 
-    x = xValues.split(",")
-    y = vacValues.split(",")
+    xVal = xValues.split(",")
+    freqVal = freqValues.split(",")
+    vacVal = vacValues.split(",")
+    xVal = [float(i) for i in xVal]
+    #print(xVal)
+    freqVal = [float(i) for i in freqVal]
+    #print(freqVal)
+    vacVal = [float(i) for i in vacVal]
+    #print(vacVal)
+    #print(f"type y: {type(vacVal)}")
 
-    x = [float(i) for i in x]
-    print(x)
-    y = [float(i) for i in y]
-    print(y)
-
-    return x,y,1
+    return xVal,freqVal,vacVal,1
 
 def AnalyzeFile(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
 
