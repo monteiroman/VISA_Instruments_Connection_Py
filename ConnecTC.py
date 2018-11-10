@@ -392,7 +392,7 @@ def PlotSobplot (figure, graphType):
         ax[0].grid(True)
         # ax[0].set_xscale("log")
         # ax[0].set_xlabel("Frecuencia [Hz]")
-        ax[0].set_ylabel("Magnitud [dB]")
+        ax[0].set_ylabel("Frecuencia [Hz]")
         ax[0].set_title("Barrido en fecuencia")
         ax.append(figure.figure.add_subplot(212))
         ax[1].clear()
