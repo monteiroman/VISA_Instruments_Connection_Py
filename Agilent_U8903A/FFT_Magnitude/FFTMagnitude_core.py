@@ -50,14 +50,14 @@ def StartMeasure(instrument, points=256):
 
     # convert ascii to int. First number of the file
     digits = message[1:2][0] - 48
-    print(f"type digits: {type(digits)} = {digits}")
+    #print(f"type digits: {type(digits)} = {digits}")
 
     # extract the number of bytecount
     count = message[2:2+digits]
     #print(f"type count: {type(count)} = {count}")
     # convert bytes to string
     bytecount = count.decode("utf-8")
-    print(f"type count: {type(bytecount)} = {bytecount}")
+    #print(f"type count: {type(bytecount)} = {bytecount}")
 
     # string2int
     bytecount = int(bytecount)
@@ -65,23 +65,29 @@ def StartMeasure(instrument, points=256):
 
     # file info data chop
     bytesData = message[2+digits:-1]
-    print(f"type count: {type(bytesData)}")
+    #print(f"type count: {type(bytesData)}")
 
     y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
     y = y.newbyteorder()
     print (y)
     print (len(y))
 
+    # x axis points
     x = np.empty(points)
-    filler = np.arange(0,points,1)
+    # The first point of the fft is at 1hz
+    filler = np.arange(1,points+1,1)
     index = np.arange(x.size)
     np.put(x,index,filler)
+    #print(x)
+    for i in range(1, len(x)):
+        x[i] = (x[i]*MeasureBW)/((points-1))
+    #print (x)
 
     return x,y,1
 
 def AnalyzeFile(points=256):
 
-    import struct
+    MeasureBW = 30000
 
     with open("RAW_Message", "rb") as file:
         message = file.read()
@@ -89,14 +95,14 @@ def AnalyzeFile(points=256):
 
     # convert ascii to int. First number of the file
     digits = message[1:2][0] - 48
-    print(f"type digits: {type(digits)} = {digits}")
+    #print(f"type digits: {type(digits)} = {digits}")
 
     # extract the number of bytecount
     count = message[2:2+digits]
     #print(f"type count: {type(count)} = {count}")
     # convert bytes to string
     bytecount = count.decode("utf-8")
-    print(f"type count: {type(bytecount)} = {bytecount}")
+    #print(f"type count: {type(bytecount)} = {bytecount}")
 
     # string2int
     bytecount = int(bytecount)
@@ -104,35 +110,24 @@ def AnalyzeFile(points=256):
 
     # file info data chop
     bytesData = message[2+digits:-1]
-    print(f"type count: {type(bytesData)}")
+    #print(f"type count: {type(bytesData)}")
 
-    # converts file bytes in floats
-    # y = []
-    # for i in range(0, len(bytesData), 4):
-    #     packed = bytesData[i:i+4]
-    #     y.append(packed)
-    #     # unpacked = struct.unpack("f", packed)
-    #     # y.append(unpacked[0])
-    # print (y)
-    # print (len(y))
-    #y = str(y)
     y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
     y = y.newbyteorder()
-    print (y)
+    #print (y)
     # print (len(y))
 
-    x = np.empty(256)
-    filler = np.arange(0,256,1)
+    # x axis points
+    x = np.empty(points)
+    # The first point of the fft is at 1hz
+    filler = np.arange(1,points+1,1)
     index = np.arange(x.size)
     np.put(x,index,filler)
-
-    # plt.plot(x, y)
-    # plt.grid(True)
-    # plt.xlabel('Frequency [Hz]')
-    # plt.ylabel('Magnitude [dB]')
-    # plt.title('FFT')
-    # plt.show()
-    print(points)
+    #print(x)
+    for i in range(1, len(x)):
+        x[i] = (x[i]*MeasureBW)/((points-1))
+    #print (x)
+    #print(points)
     return x,y,1
 
 # This main is left for debugging the measure file

@@ -87,11 +87,11 @@ def AnalyzeFile(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1
     freqVal = freqValues.split(",")
     vacVal = vacValues.split(",")
     xVal = [float(i) for i in xVal]
-    print(xVal)
+    #print(xVal)
     freqVal = [float(i) for i in freqVal]
-    print(freqVal)
+    #print(freqVal)
     vacVal = [float(i) for i in vacVal]
-    print(vacVal)
-    print(f"type y: {type(vacVal)}")
+    #print(vacVal)
+    #print(f"type y: {type(vacVal)}")
 
     return xVal,freqVal,vacVal,1

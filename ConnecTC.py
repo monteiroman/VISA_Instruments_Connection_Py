@@ -18,6 +18,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
+import time
+
 #from Agilent_U8903A import FFT_Magnitude
 import Agilent_U8903A.FFT_Magnitude.FFTMagnitude_core as FFTMag
 import Agilent_U8903A.Linear_Sweep.LinearSweep_core as LinearSweep
@@ -102,14 +104,17 @@ class MyTableWidget(QWidget):
             print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
     def connectButtonClicked (self):
-        s, self.instrumentList = SearchInstrument(self)
-        if self.instrumentList:
-            self.instrument = SelectInstrument(self.instrumentList)
-        self.parent().statusBar().showMessage(s)
+        if not self.instrument:
+            s, self.instrumentList = SearchInstrument(self)
+            if self.instrumentList:
+                self.instrument = SelectInstrument(self.instrumentList)
+            self.parent().statusBar().showMessage(s)
+        else:
+            self.parent().statusBar().showMessage("Ya se encuentra conectado al equipo")
 
     def FFTMagBtnClicked (self, points=256):
         if self.instrumentList:
-            self.parent().statusBar().showMessage("Comenzando la comunicacion")
+            self.parent().statusBar().showMessage("Comenzando la comunicacion...")
             x,y,status = FFT_Mag_Measure (self.instrument, points)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
@@ -117,6 +122,7 @@ class MyTableWidget(QWidget):
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
+            self.parent().statusBar().showMessage("Listo!!")
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             x,y,status = FFT_Mag_Measure(self.instrument, points)
@@ -135,7 +141,7 @@ class MyTableWidget(QWidget):
 
     def sweepBtnClicked (self):
         if self.instrumentList:
-            self.parent().statusBar().showMessage("Comenzando la comunicacion")
+            self.parent().statusBar().showMessage("Comenzando la comunicacion...")
             self.startFreq = self.startFreq_Edit.text()
             self.endFreq = self.endFreq_Edit.text()
             self.stepSize = self.freqStep_Edit.text()
@@ -153,14 +159,17 @@ class MyTableWidget(QWidget):
             if int(self.outVolt) > 20:
                 self.parent().statusBar().showMessage("La tension de salida tiene un rango de 1 a 20 volts")
                 return
+            time.sleep(2)
+            self.parent().statusBar().showMessage("Midiendo, por favor espere.")
             x,y,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
             if status == -1:
-                self.parent().statusBar().showMessage("No se pudo realizar la medición")
+                self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
             ax[0].plot(x,y)
             ax[1].plot(x,m)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
+            self.parent().statusBar().showMessage("Listo!!")
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             self.startFreq = self.startFreq_Edit.text()
