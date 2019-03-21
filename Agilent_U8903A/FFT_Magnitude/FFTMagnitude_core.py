@@ -23,6 +23,8 @@ from instrument import Instrument
 
 def StartMeasure(instrument, points=256):
 
+    MeasureBW = 30000
+
     instrument.write("DISP:ANAL:MODE MAGN")
     setPoints = "SENS:WAV:POIN " + str(points)
     instrument.write(setPoints)
@@ -67,7 +69,7 @@ def StartMeasure(instrument, points=256):
     bytesData = message[2+digits:-1]
     #print(f"type count: {type(bytesData)}")
 
-    y = np.frombuffer(bytesData, dtype=np.float32, count=256, offset=0)
+    y = np.frombuffer(bytesData, dtype=np.float32, count=points, offset=0)
     y = y.newbyteorder()
     print (y)
     print (len(y))

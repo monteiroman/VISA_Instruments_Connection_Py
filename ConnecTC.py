@@ -116,7 +116,7 @@ class MyTableWidget(QWidget):
         else:
             self.parent().statusBar().showMessage("Ya se encuentra conectado al equipo")
 
-    def FFTMagBtnClicked (self, points=256):
+    def FFTMagBtnClicked (self, points):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion...")
             mode = WITH_INSTRUMENT                                                              #FOR DEBUGGIN PURPOSES
@@ -168,7 +168,7 @@ class MyTableWidget(QWidget):
             time.sleep(2)
             self.parent().statusBar().showMessage("Midiendo, por favor espere.")
             mode = WITH_INSTRUMENT                                                                                      #FOR DEBUGGIN PURPOSES
-            x,y,status = Frequency_Sweep_Measure(self.instrument,
+            x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
             self.dwellTimeMS, mode)
             if status == -1:
@@ -389,7 +389,7 @@ def SearchInstrument (self):
 def SelectInstrument (instrumentList):
     return instrumentList[0]
 
-def FFT_Mag_Measure (instrument, points=256, mode=WITH_INSTRUMENT):
+def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT):
     if mode==WITH_INSTRUMENT:                                                   #FOR DEBUGGIN PURPOSES
         x,y,status = FFTMag.StartMeasure(instrument, points)
     else:                                                                       #FOR DEBUGGIN PURPOSES
@@ -399,7 +399,7 @@ def FFT_Mag_Measure (instrument, points=256, mode=WITH_INSTRUMENT):
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
 stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
     if mode == WITH_INSTRUMENT:                                                 #FOR DEBUGGIN PURPOSES
-        x,y,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq,
+        x,y,m,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq,
         stepSize, outVolt, dwellTimeMS)
     else:                                                                       #FOR DEBUGGIN PURPOSES
         x,y,m,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq,  #FOR DEBUGGIN PURPOSES

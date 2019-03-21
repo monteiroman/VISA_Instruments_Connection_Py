@@ -61,9 +61,9 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     instrument.write("FETC:SWE? FUNC2, (@2)")       # Acquires the sweep result for function 2
     vacValues = instrument.read_raw()
 
-    xVal = xValues.split(",")
-    freqVal = freqValues.split(",")
-    vacVal = vacValues.split(",")
+    xVal = xValues.split(str.encode(","))
+    freqVal = freqValues.split(str.encode(","))
+    vacVal = vacValues.split(str.encode(","))
     xVal = [float(i) for i in xVal]
     #print(xVal)
     freqVal = [float(i) for i in freqVal]
