@@ -35,6 +35,8 @@ from instrument import Instrument
 
 FFT_MAG = 0
 LINEAR_SWEEP = 1
+NO_INSTRUMENT = 0                                                               #FOR DEBUGGIN PURPOSES
+WITH_INSTRUMENT = 1                                                             #FOR DEBUGGIN PURPOSES
 
 
 class ConnecTC_GUI(QMainWindow):
@@ -101,7 +103,9 @@ class MyTableWidget(QWidget):
     def on_click(self):
         print("\n")
         for currentQTableWidgetItem in self.tableWidget.selectedItems():
-            print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
+            print(currentQTableWidgetItem.row(),
+            currentQTableWidgetItem.column(),
+            currentQTableWidgetItem.text())
 
     def connectButtonClicked (self):
         if not self.instrument:
@@ -115,7 +119,8 @@ class MyTableWidget(QWidget):
     def FFTMagBtnClicked (self, points=256):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion...")
-            x,y,status = FFT_Mag_Measure (self.instrument, points)
+            mode = WITH_INSTRUMENT                                                              #FOR DEBUGGIN PURPOSES
+            x,y,status = FFT_Mag_Measure (self.instrument, points, mode)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
@@ -125,7 +130,8 @@ class MyTableWidget(QWidget):
             self.parent().statusBar().showMessage("Listo!!")
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
-            x,y,status = FFT_Mag_Measure(self.instrument, points)
+            mode = NO_INSTRUMENT                                                                #FOR DEBUGGIN PURPOSES
+            x,y,status = FFT_Mag_Measure(self.instrument, points, mode)
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
@@ -161,7 +167,10 @@ class MyTableWidget(QWidget):
                 return
             time.sleep(2)
             self.parent().statusBar().showMessage("Midiendo, por favor espere.")
-            x,y,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            mode = WITH_INSTRUMENT                                                                                      #FOR DEBUGGIN PURPOSES
+            x,y,status = Frequency_Sweep_Measure(self.instrument,
+            self.startFreq, self.endFreq, self.stepSize, self.outVolt,
+            self.dwellTimeMS, mode)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
@@ -181,7 +190,8 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("Algun valor no es un número")
                 return
             if int(self.startFreq) < 20 or int(self.startFreq) > 20000 or int(self.endFreq) < 20 or int(self.endFreq) > 20000 or int(self.startFreq) > int(self.endFreq):
-                self.parent().statusBar().showMessage("La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 20000 Hz")
+                self.parent().statusBar().showMessage(
+                "La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 20000 Hz")
                 return
             if int(self.stepSize) > int(self.endFreq):
                 self.parent().statusBar().showMessage("El salto de frecuencia no puede ser mayor a la frecuencia final")
@@ -189,7 +199,10 @@ class MyTableWidget(QWidget):
             if int(self.outVolt) > 20:
                 self.parent().statusBar().showMessage("La tension de salida tiene un rango de 1 a 20 volts")
                 return
-            x,y,m,status = Frequency_Sweep_Measure(self.instrument, self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            mode = NO_INSTRUMENT                                                                                        #FOR DEBUGGIN PURPOSES
+            x,y,m,status = Frequency_Sweep_Measure(self.instrument,
+            self.startFreq, self.endFreq, self.stepSize, self.outVolt,
+            self.dwellTimeMS, mode)
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
             ax[0].plot(x,y)
             ax[1].plot(x,m)
@@ -376,14 +389,21 @@ def SearchInstrument (self):
 def SelectInstrument (instrumentList):
     return instrumentList[0]
 
-def FFT_Mag_Measure (instrument, points=256):
-    # x,y,status = FFTMag.StartMeasure(instrument, points)
-    x,y,status = FFTMag.AnalyzeFile(points)
+def FFT_Mag_Measure (instrument, points=256, mode=WITH_INSTRUMENT):
+    if mode==WITH_INSTRUMENT:                                                   #FOR DEBUGGIN PURPOSES
+        x,y,status = FFTMag.StartMeasure(instrument, points)
+    else:                                                                       #FOR DEBUGGIN PURPOSES
+        x,y,status = FFTMag.AnalyzeFile(points)                                 #FOR DEBUGGIN PURPOSES
     return x,y,status
 
-def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
-    # x,y,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
-    x,y,m,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
+def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
+stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
+    if mode == WITH_INSTRUMENT:                                                 #FOR DEBUGGIN PURPOSES
+        x,y,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq,
+        stepSize, outVolt, dwellTimeMS)
+    else:                                                                       #FOR DEBUGGIN PURPOSES
+        x,y,m,status = LinearSweep.AnalyzeFile(instrument, startFreq, endFreq,  #FOR DEBUGGIN PURPOSES
+        stepSize, outVolt, dwellTimeMS)                                         #FOR DEBUGGIN PURPOSES
     return x,y,m,status
 
 def PlotSobplot (figure, graphType):
