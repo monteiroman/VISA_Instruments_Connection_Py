@@ -23,8 +23,12 @@ from instrument import Instrument
 
 def StartMeasure(instrument, points=256):
 
-    MeasureBW = 30000
+    # MeasureBW = 30000
+    # MeasureBW = 100000
+    MeasureBW = 78125
 
+
+    instrument.write("INP:BAND LOW")
     instrument.write("DISP:ANAL:MODE MAGN")
     setPoints = "SENS:WAV:POIN " + str(points)
     instrument.write(setPoints)
@@ -82,10 +86,19 @@ def StartMeasure(instrument, points=256):
     np.put(x,index,filler)
     #print(x)
     for i in range(1, len(x)):
-        x[i] = (x[i]*MeasureBW)/((points-1))
-    #print (x)
+        x[i] = (x[i]*MeasureBW)/(2*(points-1))
+    # print (x)
 
-    return x,y,1
+    xAux = []
+    yAux = []
+
+    for i in range(1,196):
+        xAux.append(x[i])
+
+    for i in range(1,196):
+        yAux.append(y[i])
+
+    return xAux,yAux,1
 
 def AnalyzeFile(points=256):
 
