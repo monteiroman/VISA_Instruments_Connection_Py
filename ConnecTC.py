@@ -9,7 +9,7 @@ Created on Tue Oct 22 10:35:23 2018
 import sys
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
  QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton,
- QHBoxLayout, QFrame, QVBoxLayout, QTabWidget)
+ QHBoxLayout, QFrame, QVBoxLayout, QTabWidget, QCheckBox, QButtonGroup, QAbstractButton)
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 
@@ -37,6 +37,8 @@ FFT_MAG = 0
 LINEAR_SWEEP = 1
 NO_INSTRUMENT = 0                                                               #FOR DEBUGGIN PURPOSES
 WITH_INSTRUMENT = 1                                                             #FOR DEBUGGIN PURPOSES
+LOWBW = 30000
+HIGHBW = 100000
 
 
 class ConnecTC_GUI(QMainWindow):
@@ -99,6 +101,8 @@ class MyTableWidget(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
+        self.bw = LOWBW
+
     @pyqtSlot()
     def on_click(self):
         print("\n")
@@ -116,11 +120,11 @@ class MyTableWidget(QWidget):
         else:
             self.parent().statusBar().showMessage("Ya se encuentra conectado al equipo")
 
-    def FFTMagBtnClicked (self, points):
+    def FFTMagBtnClicked (self, points, bw):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion...")
             mode = WITH_INSTRUMENT                                                              #FOR DEBUGGIN PURPOSES
-            x,y,status = FFT_Mag_Measure (self.instrument, points, mode)
+            x,y,status = FFT_Mag_Measure (self.instrument, points, mode, bw)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
@@ -131,7 +135,7 @@ class MyTableWidget(QWidget):
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             mode = NO_INSTRUMENT                                                                #FOR DEBUGGIN PURPOSES
-            x,y,status = FFT_Mag_Measure(self.instrument, points, mode)
+            x,y,status = FFT_Mag_Measure(self.instrument, points, mode, bw)
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
@@ -209,6 +213,13 @@ class MyTableWidget(QWidget):
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
         return
 
+    def btngroup (self, btn):
+        print (btn.text()+" is selected")
+        if(btn.text()=="30 kHz"):
+            self.bw = LOWBW
+        else:
+            self.bw = HIGHBW
+
 class Tabs (MyTableWidget):
 
     def __init__(self, parent):
@@ -237,17 +248,38 @@ class Tabs (MyTableWidget):
         layout.leftFrame.setMinimumWidth(400)
         layout.leftFrame.setMaximumWidth(400)
 
+        self.bwLabel = QLabel("Cantidad de puntos:")
+        self.bwLabel.setMaximumWidth(200)
+        layout.leftGridLayout.addWidget(self.bwLabel, 1, 0)
+
         self.FFTMag256Btn = QPushButton("256 Puntos")
-        self.FFTMag256Btn.clicked.connect(lambda: self.FFTMagBtnClicked(256))
-        layout.leftGridLayout.addWidget(self.FFTMag256Btn, 1, 0)
+        self.FFTMag256Btn.clicked.connect(lambda: self.FFTMagBtnClicked(256, self.bw))
+        layout.leftGridLayout.addWidget(self.FFTMag256Btn, 2, 1)
 
         self.FFTMag512Btn = QPushButton("512 Puntos")
-        self.FFTMag512Btn.clicked.connect(lambda: self.FFTMagBtnClicked(512))
-        layout.leftGridLayout.addWidget(self.FFTMag512Btn, 2, 0)
+        self.FFTMag512Btn.clicked.connect(lambda: self.FFTMagBtnClicked(512, self.bw))
+        layout.leftGridLayout.addWidget(self.FFTMag512Btn, 3, 1)
 
         self.FFTMag1024Btn = QPushButton("1024 Puntos")
-        self.FFTMag1024Btn.clicked.connect(lambda: self.FFTMagBtnClicked(1024))
-        layout.leftGridLayout.addWidget(self.FFTMag1024Btn, 3, 0)
+        self.FFTMag1024Btn.clicked.connect(lambda: self.FFTMagBtnClicked(1024, self.bw))
+        layout.leftGridLayout.addWidget(self.FFTMag1024Btn, 4, 1)
+
+        self.bwLabel = QLabel("Ancho de banda: ")
+        self.bwLabel.setMaximumWidth(200)
+        layout.leftGridLayout.addWidget(self.bwLabel, 5, 0)
+
+        self.lowBw = QCheckBox("30 kHz")
+        self.lowBw.setChecked(True)
+        layout.leftGridLayout.addWidget(self.lowBw, 6,1)
+
+        self.highBw = QCheckBox("100 kHz")
+        layout.leftGridLayout.addWidget(self.highBw, 6,2)
+
+        self.buttonGroup = QButtonGroup()
+        self.buttonGroup.addButton(self.lowBw, 1)
+        self.buttonGroup.addButton(self.highBw, 2)
+
+        self.buttonGroup.buttonClicked[QAbstractButton].connect(self.btngroup)
 
         canvas = FigureCanvas(plt.figure())
         toolbar = NavigationToolbar(canvas, self)
@@ -389,11 +421,11 @@ def SearchInstrument (self):
 def SelectInstrument (instrumentList):
     return instrumentList[0]
 
-def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT):
+def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT, bw=LOWBW):
     if mode==WITH_INSTRUMENT:                                                   #FOR DEBUGGIN PURPOSES
-        x,y,status = FFTMag.StartMeasure(instrument, points)
+        x,y,status = FFTMag.StartMeasure(instrument, points, bw)
     else:                                                                       #FOR DEBUGGIN PURPOSES
-        x,y,status = FFTMag.AnalyzeFile(points)                                 #FOR DEBUGGIN PURPOSES
+        x,y,status = FFTMag.AnalyzeFile(points, bw)                             #FOR DEBUGGIN PURPOSES
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,

@@ -20,15 +20,22 @@ sys.path.insert(0, 'Libreria')
 # Traemos la clase base que implmenta las funciones de VISA
 from instrument import Instrument
 
-
-def StartMeasure(instrument, points=256):
-
-    # MeasureBW = 30000
-    # MeasureBW = 100000
-    MeasureBW = 78125
+LOWBW = 30000
+HIGHBW = 100000
 
 
-    instrument.write("INP:BAND LOW")
+def StartMeasure(instrument, points=256, bw=LOWBW):
+
+    if(bw==LOWBW):
+        MeasureBW = 78125
+        stopFreq = LOWBW
+        bWString = "LOW"
+    else:
+        MeasureBW = 312500
+        stopFreq = HIGHBW
+        bWString = "HIGH"
+
+    instrument.write("INP:BAND " + bWString)
     instrument.write("DISP:ANAL:MODE MAGN")
     setPoints = "SENS:WAV:POIN " + str(points)
     instrument.write(setPoints)
@@ -92,17 +99,27 @@ def StartMeasure(instrument, points=256):
     xAux = []
     yAux = []
 
-    for i in range(1,196):
+    j = 0
+    while x[j] <= stopFreq:
+        j=j+1
+    print(j)
+
+    for i in range(1,j):
         xAux.append(x[i])
 
-    for i in range(1,196):
+    for i in range(1,j):
         yAux.append(y[i])
 
     return xAux,yAux,1
 
-def AnalyzeFile(points=256):
+def AnalyzeFile(points=256, bw=LOWBW):
 
-    MeasureBW = 30000
+    if(bw==LOWBW):
+        MeasureBW = 78125
+        stopFreq = LOWBW
+    else:
+        MeasureBW = 312500
+        stopFreq = HIGHBW
 
     with open("RAW_Message", "rb") as file:
         message = file.read()
@@ -140,10 +157,25 @@ def AnalyzeFile(points=256):
     np.put(x,index,filler)
     #print(x)
     for i in range(1, len(x)):
-        x[i] = (x[i]*MeasureBW)/((points-1))
-    #print (x)
+        x[i] = (x[i]*MeasureBW)/(2*(points-1))
+    print (x)
     #print(points)
-    return x,y,1
+
+    xAux = []
+    yAux = []
+
+    j = 0
+    while x[j] <= stopFreq:
+        j=j+1
+    print(j)
+
+    for i in range(1,j):
+        xAux.append(x[i])
+
+    for i in range(1,j):
+        yAux.append(y[i])
+
+    return xAux,yAux,1
 
 # This main is left for debugging the measure file
 if __name__ == '__main__':
