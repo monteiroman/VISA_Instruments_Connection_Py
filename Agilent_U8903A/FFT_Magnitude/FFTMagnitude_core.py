@@ -35,6 +35,10 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
         stopFreq = HIGHBW
         bWString = "HIGH"
 
+    instrument.write("INIT:CONT:ANAL OFF, (@1)")
+    instrument.write("INIT:CONT:ANAL OFF, (@2)")
+
+
     instrument.write("INP:BAND " + bWString)
     instrument.write("DISP:ANAL:MODE MAGN")
     setPoints = "SENS:WAV:POIN " + str(points)

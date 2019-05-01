@@ -43,9 +43,9 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     instrument.write(sweepStep)                     # Sets the sweep step size to stepSize.
     instrument.write("SENS:SWE:INT ANAL")           # Sets the sweep analyzer interface to analog.
     instrument.write("SENS:SWE:REF:CHAN 1")         # Sets the sweep reference channel for measurement to channel 1.
-    instrument.write("SENS:SWE:CHAN 2")             # Sets the analyzer channel to perform sweep to channel 2.
-    instrument.write("SENS:FUNC1 FREQ, (@2)")       # Sets the measurement function 1 to frequency.
-    instrument.write("SENS:FUNC2 dBV, (@2)")        # Sets the measurement function 2 to dBV.
+    instrument.write("SENS:SWE:CHAN 1")             # Sets the analyzer channel to perform sweep to channel 2.
+    instrument.write("SENS:FUNC1 FREQ, (@1)")       # Sets the measurement function 1 to frequency.
+    instrument.write("SENS:FUNC2:UNIT dBV, (@1)")        # Sets the measurement function 2 to dBV.
     instrument.write("INIT:SWE")                    # Initiates the sweep.
     aux = "1"
     while int(aux) is not 0:                        # Polls the status register to check if the measuring operation
@@ -54,11 +54,11 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
         aux = instrument.read()                     # operation has completed.
         print(aux)
         time.sleep(1)
-    instrument.write("SOUR:SWE:VAL? (@2)")          # Acquires the X- axis sweep points values.
+    instrument.write("SOUR:SWE:VAL? (@1)")          # Acquires the X- axis sweep points values.
     xValues = instrument.read_raw()
-    instrument.write("FETC:SWE? FUNC1, (@2)")       # Acquires the sweep result for function 1.
+    instrument.write("FETC:SWE? FUNC1, (@1)")       # Acquires the sweep result for function 1.
     freqValues = instrument.read_raw()
-    instrument.write("FETC:SWE? FUNC2, (@2)")       # Acquires the sweep result for function 2
+    instrument.write("FETC:SWE? FUNC2, (@1)")       # Acquires the sweep result for function 2
     vacValues = instrument.read_raw()
 
     xVal = xValues.split(str.encode(","))
@@ -69,6 +69,8 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     freqVal = [float(i) for i in freqVal]
     #print(freqVal)
     vacVal = [float(i) for i in vacVal]
+    vacVal = [print(i) for i in vacVal]
+
     #print(vacVal)
     #print(f"type y: {type(vacVal)}")
 

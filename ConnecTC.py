@@ -6,6 +6,9 @@ Created on Tue Oct 22 10:35:23 2018
 @author: tiago
 """
 
+# TODO generar dos procesos para no perder la referencia del equipo cuando no se devuelve una medicion
+# TODO Agregar configuracion del equipo antes de cada medicion (balanceado/desbalanceado, apagar el canal de medicion, etc)
+
 import sys
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
  QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton,
