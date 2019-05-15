@@ -140,6 +140,9 @@ class MyTableWidget(QWidget):
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             mode = NO_INSTRUMENT                                                                #FOR DEBUGGIN PURPOSES
             x,y,status = FFT_Mag_Measure(self.instrument, points, mode, bw)
+            if status == -1:
+                self.parent().statusBar().showMessage("No se pudo realizar la medición")
+                return
             ax = PlotSobplot(self.canvasHandlers["fftMag"], FFT_MAG)
             ax[0].plot(x,y)
             self.canvasHandlers["fftMag"].figure.canvas.draw()
@@ -211,6 +214,9 @@ class MyTableWidget(QWidget):
             x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
             self.dwellTimeMS, mode)
+            if status == -1:
+                self.parent().statusBar().showMessage("No se pudo realizar la medición.")
+                return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
             ax[0].plot(x,y)
             ax[1].plot(x,m)
@@ -494,9 +500,20 @@ class FFT_Thread(threading.Thread):
 
     def run(self):
         if self.instrument == -1:
-            self.x, self.y, self.status = FFTMag.AnalyzeFile(self.points, self.bw)
+            try:
+                self.x, self.y, self.status = FFTMag.AnalyzeFile(self.points, self.bw)
+            except:
+                self.x = 0
+                self.y = 0
+                self.status = -1
         else:
-            self.x, self.y, self.status = FFTMag.StartMeasure(self.instrument, self.points, self.bw)
+            try:
+                self.x, self.y, self.status = FFTMag.StartMeasure(self.instrument, self.points, self.bw)
+            except:
+                self.x = 0
+                self.y = 0
+                self.status = -1
+
 
 class Sweep_Thread(threading.Thread):
     def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
@@ -513,11 +530,23 @@ class Sweep_Thread(threading.Thread):
 
     def run(self):
         if self.instrument == -1:
-            self.x, self.y, self.m, self.status = LinearSweep.AnalyzeFile(self.startFreq,
-            self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            try:
+                self.x, self.y, self.m, self.status = LinearSweep.AnalyzeFile(self.startFreq,
+                self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            except:
+                self.x = 0
+                self.y = 0
+                self.m = 0
+                self.status = -1
         else:
-            self.x, self.y, self.m, self.status = LinearSweep.StartMeasure(self.instrument,
-            self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            try:
+                self.x, self.y, self.m, self.status = LinearSweep.StartMeasure(self.instrument,
+                self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+            except:
+                self.x = 0
+                self.y = 0
+                self.m = 0
+                self.status = -1
 
 
 if __name__ == "__main__":
