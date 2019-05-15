@@ -23,6 +23,19 @@ from instrument import Instrument
 
 def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
 
+    instrument.write("INIT:CONT:ANAL OFF, (@1)")    # Turns off the analyzer in channel 1
+    instrument.write("INIT:CONT:ANAL OFF, (@2)")    # Turns off the analyzer in channel 2
+    instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
+    instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
+
+    instrument.write("OUTP:STAT OFF, (@1)")         # Turns off the output of channel 1
+    instrument.write("OUTP:STAT OFF, (@2)")         # Turns off the output of channel 2
+    instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
+    instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
+    instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
+    instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
+
+
     instrument.write("SOUR:SWE:INT ANAL")           # Sets the sweep generator interface to analog.
     instrument.write("SOUR:FUNC SINE, (@1)")        # Sets the generator waveform type to sine on channel 1.
     amplitudeSet = "SOUR:VOLT " + str(outVolt) + "Vp, (@1)"
@@ -45,12 +58,13 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     instrument.write("SENS:SWE:REF:CHAN 1")         # Sets the sweep reference channel for measurement to channel 1.
     instrument.write("SENS:SWE:CHAN 1")             # Sets the analyzer channel to perform sweep to channel 2.
     instrument.write("SENS:FUNC1 FREQ, (@1)")       # Sets the measurement function 1 to frequency.
+    instrument.write("SENS:FUNC2 VAC, (@1)")
     instrument.write("SENS:FUNC2:UNIT dBV, (@1)")        # Sets the measurement function 2 to dBV.
     instrument.write("INIT:SWE")                    # Initiates the sweep.
     aux = "1"
     while int(aux) is not 0:                        # Polls the status register to check if the measuring operation
         instrument.write("STAT:OPER:COND?")         # has completed. The condition register will return 0 if the
-        time.sleep(5)
+        time.sleep(6)
         aux = instrument.read()                     # operation has completed.
         print(aux)
         time.sleep(1)
@@ -69,14 +83,18 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     freqVal = [float(i) for i in freqVal]
     #print(freqVal)
     vacVal = [float(i) for i in vacVal]
-    vacVal = [print(i) for i in vacVal]
+
+    n = 1
+    for i in vacVal:
+        print(str(n) + " " + str(i))
+        n = n + 1
 
     #print(vacVal)
     #print(f"type y: {type(vacVal)}")
 
     return xVal,freqVal,vacVal,1
 
-def AnalyzeFile(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
+def AnalyzeFile(startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
 
     # Open file and read lines for debugging
     lines = [line.rstrip('\n') for line in open('RAW_Message2')]

@@ -35,8 +35,17 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
         stopFreq = HIGHBW
         bWString = "HIGH"
 
-    instrument.write("INIT:CONT:ANAL OFF, (@1)")
-    instrument.write("INIT:CONT:ANAL OFF, (@2)")
+    instrument.write("INIT:CONT:ANAL OFF, (@1)")    # Turns off the analyzer in channel 1
+    instrument.write("INIT:CONT:ANAL OFF, (@2)")    # Turns off the analyzer in channel 2
+    instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
+    instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
+
+    instrument.write("OUTP:STAT OFF, (@1)")         # Turns off the output of channel 1
+    instrument.write("OUTP:STAT OFF, (@2)")         # Turns off the output of channel 2
+    instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
+    instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
+    instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
+    instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
 
 
     instrument.write("INP:BAND " + bWString)

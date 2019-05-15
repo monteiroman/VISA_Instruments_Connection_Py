@@ -22,6 +22,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 import time
+import threading
 
 #from Agilent_U8903A import FFT_Magnitude
 import Agilent_U8903A.FFT_Magnitude.FFTMagnitude_core as FFTMag
@@ -425,20 +426,29 @@ def SelectInstrument (instrumentList):
     return instrumentList[0]
 
 def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT, bw=LOWBW):
+    magFFT_Thread = FFT_Thread(name = "FFT_Thread")
     if mode==WITH_INSTRUMENT:                                                   #FOR DEBUGGIN PURPOSES
-        x,y,status = FFTMag.StartMeasure(instrument, points, bw)
+        magFFT_Thread.setFFTData(points, bw, instrument)
     else:                                                                       #FOR DEBUGGIN PURPOSES
-        x,y,status = FFTMag.AnalyzeFile(points, bw)                             #FOR DEBUGGIN PURPOSES
+        magFFT_Thread.setFFTData(points, bw)
+
+    magFFT_Thread.start()
+    magFFT_Thread.join()
+    x,y,status = magFFT_Thread.getFFTData()
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
 stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
-    if mode == WITH_INSTRUMENT:                                                 #FOR DEBUGGIN PURPOSES
-        x,y,m,status = LinearSweep.StartMeasure(instrument, startFreq, endFreq,
-        stepSize, outVolt, dwellTimeMS)
-    else:                                                                       #FOR DEBUGGIN PURPOSES
-        x,y,m,status = LinearSweep.AnalyzeFile(startFreq, endFreq, stepSize,    #FOR DEBUGGIN PURPOSES
-        outVolt, dwellTimeMS)                                                   #FOR DEBUGGIN PURPOSES
+    sweep_Thread = Sweep_Thread(name = "Sweep_Thread")
+    if mode == WITH_INSTRUMENT:
+        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
+                            instrument)
+    else:
+        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
+
+    sweep_Thread.start()
+    sweep_Thread.join()
+    x,y,m,status = sweep_Thread.getSweepData()
     return x,y,m,status
 
 def PlotSobplot (figure, graphType):
@@ -472,6 +482,43 @@ def SendCommand (instrument, command):
         data = instrument.read()
         #print("Datos recibidos: " + data)
         return data
+
+class FFT_Thread(threading.Thread):
+    def setFFTData(self, points, bw, instrument=-1):
+        self.instrument = instrument
+        self.points = points
+        self.bw = bw
+
+    def getFFTData(self):
+        return self.x, self.y, self.status
+
+    def run(self):
+        if self.instrument == -1:
+            self.x, self.y, self.status = FFTMag.AnalyzeFile(self.points, self.bw)
+        else:
+            self.x, self.y, self.status = FFTMag.StartMeasure(self.instrument, self.points, self.bw)
+
+class Sweep_Thread(threading.Thread):
+    def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
+                        instrument=-1):
+        self.instrument = instrument
+        self.startFreq = startFreq
+        self.endFreq = endFreq
+        self.stepSize = stepSize
+        self.outVolt = outVolt
+        self.dwellTimeMS = dwellTimeMS
+
+    def getSweepData(self):
+        return self.x, self.y, self.m, self.status
+
+    def run(self):
+        if self.instrument == -1:
+            self.x, self.y, self.m, self.status = LinearSweep.AnalyzeFile(self.startFreq,
+            self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+        else:
+            self.x, self.y, self.m, self.status = LinearSweep.StartMeasure(self.instrument,
+            self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
