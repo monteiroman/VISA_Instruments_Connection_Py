@@ -25,16 +25,15 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
 
     instrument.write("INIT:CONT:ANAL OFF, (@1)")    # Turns off the analyzer in channel 1
     instrument.write("INIT:CONT:ANAL OFF, (@2)")    # Turns off the analyzer in channel 2
-    instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
-    instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
+    # instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
+    # instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
 
     instrument.write("OUTP:STAT OFF, (@1)")         # Turns off the output of channel 1
     instrument.write("OUTP:STAT OFF, (@2)")         # Turns off the output of channel 2
-    instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
-    instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
-    instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
-    instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
-
+    # instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
+    # instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
+    # instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
+    # instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
 
     instrument.write("SOUR:SWE:INT ANAL")           # Sets the sweep generator interface to analog.
     instrument.write("SOUR:FUNC SINE, (@1)")        # Sets the generator waveform type to sine on channel 1.
@@ -84,10 +83,11 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     #print(freqVal)
     vacVal = [float(i) for i in vacVal]
 
-    n = 1
-    for i in vacVal:
-        print(str(n) + " " + str(i))
-        n = n + 1
+    #  for loop for print VacValues
+    # n = 1
+    # for i in vacVal:
+    #     print(str(n) + " " + str(i))
+    #     n = n + 1
 
     #print(vacVal)
     #print(f"type y: {type(vacVal)}")

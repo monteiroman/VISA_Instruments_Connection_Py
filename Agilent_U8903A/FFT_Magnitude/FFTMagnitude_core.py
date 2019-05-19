@@ -37,15 +37,15 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
 
     instrument.write("INIT:CONT:ANAL OFF, (@1)")    # Turns off the analyzer in channel 1
     instrument.write("INIT:CONT:ANAL OFF, (@2)")    # Turns off the analyzer in channel 2
-    instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
-    instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
+    # instrument.write("INP:TYPE UNB, (@1)")          # sets the input of channel 1 to unbalanced
+    # instrument.write("INP:TYPE UNB, (@2)")          # sets the input of channel 2 to unbalanced
 
     instrument.write("OUTP:STAT OFF, (@1)")         # Turns off the output of channel 1
     instrument.write("OUTP:STAT OFF, (@2)")         # Turns off the output of channel 2
-    instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
-    instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
-    instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
-    instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
+    # instrument.write("OUTP:TYPE UNB, (@1)")         # sets the output of channel 1 to unbalanced mode
+    # instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
+    # instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
+    # instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
 
 
     instrument.write("INP:BAND " + bWString)
@@ -67,7 +67,7 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
 
     #print(f"type #: {type(message[0])}")
     if message[0] != 35:
-        print("No se pudieron obtener los puntos")
+        # print("No se pudieron obtener los puntos")
         return 0,0,-1
 
     # file = open("RAW_Message", "wb")
@@ -95,8 +95,8 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
 
     y = np.frombuffer(bytesData, dtype=np.float32, count=points, offset=0)
     y = y.newbyteorder()
-    print (y)
-    print (len(y))
+    # print (y)
+    # print (len(y))
 
     # x axis points
     x = np.empty(points)
@@ -115,7 +115,7 @@ def StartMeasure(instrument, points=256, bw=LOWBW):
     j = 0
     while x[j] <= stopFreq:
         j=j+1
-    print(j)
+    # print(j)
 
     for i in range(1,j):
         xAux.append(x[i])
@@ -171,7 +171,7 @@ def AnalyzeFile(points=256, bw=LOWBW):
     #print(x)
     for i in range(1, len(x)):
         x[i] = (x[i]*MeasureBW)/(2*(points-1))
-    print (x)
+    # print (x)
     #print(points)
 
     xAux = []
@@ -180,7 +180,7 @@ def AnalyzeFile(points=256, bw=LOWBW):
     j = 0
     while x[j] <= stopFreq:
         j=j+1
-    print(j)
+    # print(j)
 
     for i in range(1,j):
         xAux.append(x[i])

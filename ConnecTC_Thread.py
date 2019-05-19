@@ -6,13 +6,12 @@ Created on Tue Oct 22 10:35:23 2018
 @author: tiago
 """
 
-# TODO generar dos procesos para no perder la referencia del equipo cuando no se devuelve una medicion
-# TODO Agregar configuracion del equipo antes de cada medicion (balanceado/desbalanceado, apagar el canal de medicion, etc)
+# TODO Hablar con cesar de SENSe:REFerence:IMPedance pagina 220 del manual
 
 import sys
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QAction, qApp, QWidget,
  QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton,
- QHBoxLayout, QFrame, QVBoxLayout, QTabWidget, QCheckBox, QButtonGroup, QAbstractButton)
+ QHBoxLayout, QFrame, QVBoxLayout, QTabWidget, QCheckBox, QButtonGroup, QAbstractButton, QGroupBox)
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 
@@ -23,10 +22,12 @@ import matplotlib.pyplot as plt
 
 import time
 import threading
+import os
 
-#from Agilent_U8903A import FFT_Magnitude
+#from Agilent_U8903A import modules
 import Agilent_U8903A.FFT_Magnitude.FFTMagnitude_core as FFTMag
 import Agilent_U8903A.Linear_Sweep.LinearSweep_core as LinearSweep
+import Agilent_U8903A.Setup.Setup_core as Setup
 
 # Traemos la libreria VISA
 import pyvisa as visa
@@ -43,6 +44,13 @@ NO_INSTRUMENT = 0                                                               
 WITH_INSTRUMENT = 1                                                             #FOR DEBUGGIN PURPOSES
 LOWBW = 30000
 HIGHBW = 100000
+BALANCED = "BAL"
+UNBALANCED = "UNB"
+IMP50 = "IMP50"
+IMP100 = "IMP100"
+IMP600 = "IMP600"
+ON = "ON"
+OFF = "OFF"
 
 
 class ConnecTC_GUI(QMainWindow):
@@ -83,9 +91,11 @@ class MyTableWidget(QWidget):
         self.FFTMagTab = QWidget()
         self.linearSweepTab = QWidget()
         self.sendCommandTab = QWidget()
+        self.configurationTab = QWidget()
         self.tabs.resize(300,200)
         # Add tabs
         self.tabs.addTab(self.connectTab,"Conectar")
+        self.tabs.addTab(self.configurationTab,"Configuraciones")
         self.tabs.addTab(self.FFTMagTab,"FFT Magnitud")
         self.tabs.addTab(self.linearSweepTab,"Sweep Lineal")
         self.tabs.addTab(self.sendCommandTab,"Probar comandos")
@@ -98,14 +108,25 @@ class MyTableWidget(QWidget):
         # Create linearSweep tab
         self.linearSweepTab.layout = Tabs.linearSweepTab_layout(self, self.layout)
         self.linearSweepTab.setLayout(self.linearSweepTab.layout.principalLayout)
+        # Create configuration tab
+        self.configurationTab.layout = Tabs.configurationTab_layout(self, self.layout)
+        self.configurationTab.setLayout(self.configurationTab.layout)
         # Create sendCommandTab tab
         self.sendCommandTab.layout = Tabs.sendCommandTab_layout(self, self.layout)
         self.sendCommandTab.setLayout(self.sendCommandTab.layout)
         # Add tabs to widget
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
-
+        # FFTMag Banwidth
         self.bw = LOWBW
+        # Generators setup parameters
+        self.type_G1 = UNBALANCED
+        self.impedance_G1 = IMP600
+        self.type_G2 = UNBALANCED
+        self.impedance_G2 = IMP600
+        # Analyzer setup parameters
+        self.type_A1 = UNBALANCED
+        self.type_A2 = UNBALANCED
 
     @pyqtSlot()
     def on_click(self):
@@ -150,7 +171,7 @@ class MyTableWidget(QWidget):
     def sendButtonClicked (self):
         if self.instrumentList:
             self.command = self.send_Command_Edit.text()
-            data = SendCommand (self.instrument, self.command)
+            data = SendCommand(self.instrument, self.command)
             if data:
                 self.command_answer.setText("Respuesta: " + data)
         else:
@@ -186,8 +207,8 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
-            ax[0].plot(x,y)
-            ax[1].plot(x,m)
+            ax[0].plot(x,m)
+            # ax[1].plot(x,m)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
             self.parent().statusBar().showMessage("Listo!!")
         else:
@@ -218,17 +239,92 @@ class MyTableWidget(QWidget):
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
             ax = PlotSobplot(self.canvasHandlers["linearSweep"], LINEAR_SWEEP)
-            ax[0].plot(x,y)
-            ax[1].plot(x,m)
+            ax[0].plot(x,m)
+            # ax[1].plot(x,m)
             self.canvasHandlers["linearSweep"].figure.canvas.draw()
         return
 
-    def btngroup (self, btn):
-        print (btn.text()+" is selected")
+    def setFFTBw (self, btn):
+        # print (btn.text()+" is selected")
         if(btn.text()=="30 kHz"):
             self.bw = LOWBW
         else:
             self.bw = HIGHBW
+
+    def setupParameters_G1 (self, btn):
+        # print (btn.text() + " is selected")
+        if btn.text() == "Desbalanceada":
+            self.imp600_G1.setChecked(True)
+            self.imp100_G1.setEnabled(False)
+            self.imp50_G1.setEnabled(True)
+            self.type_G1 = UNBALANCED
+            self.impedance_G1 = IMP600
+        if btn.text() == "Balanceada":
+            self.imp600_G1.setChecked(True)
+            self.imp100_G1.setEnabled(True)
+            self.imp50_G1.setEnabled(False)
+            self.type_G1 = BALANCED
+            self.impedance_G1 = IMP600
+        if btn.text() == "50 ohms":
+            self.impedance_G1 = IMP50
+        if btn.text() == "100 ohms":
+            self.impedance_G1 = IMP100
+        if btn.text() == "600 ohms":
+            self.impedance_G1 = IMP600
+        # print("Generador 1 Tipo :" + self.type_G1 + " Impedancia: " + self.impedance_G1)
+
+    def setupParameters_G2 (self, btn):
+        # print (btn.text() + " is selected")
+        if btn.text() == "Desbalanceada":
+            self.imp600_G2.setChecked(True)
+            self.imp100_G2.setEnabled(False)
+            self.imp50_G2.setEnabled(True)
+            self.type_G2 = UNBALANCED
+            self.impedance_G2 = IMP600
+        if btn.text() == "Balanceada":
+            self.imp600_G2.setChecked(True)
+            self.imp100_G2.setEnabled(True)
+            self.imp50_G2.setEnabled(False)
+            self.type_G2 = BALANCED
+            self.impedance_G2 = IMP600
+        if btn.text() == "50 ohms":
+            self.impedance_G2 = IMP50
+        if btn.text() == "100 ohms":
+            self.impedance_G2 = IMP100
+        if btn.text() == "600 ohms":
+            self.impedance_G2 = IMP600
+        # print("Generador 2 Tipo :" + self.type_G2 + " Impedancia: " + self.impedance_G2)
+
+    def setupParameters_A1 (self, btn):
+        # print (btn.text() + " is selected")
+        if btn.text() == "Desbalanceada":
+            self.type_A1 = UNBALANCED
+        if btn.text() == "Balanceada":
+            self.type_A1 = BALANCED
+        # print("Analizador 1 Tipo :" + self.type_A1)
+
+    def setupParameters_A2 (self, btn):
+        # print (btn.text() + " is selected")
+        if btn.text() == "Desbalanceada":
+            self.type_A2 = UNBALANCED
+        if btn.text() == "Balanceada":
+            self.type_A2 = BALANCED
+        # print("Analizador 2 Tipo :" + self.type_A2)
+
+    def setParametersButtonClicked (self):
+        if self.instrumentList:
+            Setup.Setup_Ports(self.instrument, self.type_G1, self.impedance_G1,
+                                self.type_G2, self.impedance_G2, self.type_A1,
+                                self.type_A2)
+        else:
+            self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
+            # Setup.Setup_Debug(self.type_G1, self.impedance_G1,
+            #                     self.type_G2, self.impedance_G2, self.type_A1,
+            #                     self.type_A2)
+        # print("Generador 1 Tipo :" + self.type_G1 + " Impedancia: " + self.impedance_G1)
+        # print("Generador 2 Tipo :" + self.type_G2 + " Impedancia: " + self.impedance_G2)
+        # print("Analizador 1 Tipo :" + self.type_A1)
+        # print("Analizador 2 Tipo :" + self.type_A2)
 
 class Tabs (MyTableWidget):
 
@@ -285,11 +381,11 @@ class Tabs (MyTableWidget):
         self.highBw = QCheckBox("100 kHz")
         layout.leftGridLayout.addWidget(self.highBw, 6,2)
 
-        self.buttonGroup = QButtonGroup()
-        self.buttonGroup.addButton(self.lowBw, 1)
-        self.buttonGroup.addButton(self.highBw, 2)
+        self.FFTButtonGroup = QButtonGroup()
+        self.FFTButtonGroup.addButton(self.lowBw, 1)
+        self.FFTButtonGroup.addButton(self.highBw, 2)
 
-        self.buttonGroup.buttonClicked[QAbstractButton].connect(self.btngroup)
+        self.FFTButtonGroup.buttonClicked[QAbstractButton].connect(self.setFFTBw)
 
         canvas = FigureCanvas(plt.figure())
         toolbar = NavigationToolbar(canvas, self)
@@ -383,6 +479,175 @@ class Tabs (MyTableWidget):
 
         return layout
 
+    def configurationTab_layout (self, layout):
+        layout = QGridLayout()
+# ------Generator 1--------
+        self.generator1GroupBox = QGroupBox("Generador 1:")
+
+        self.typeTitle_G1 = QLabel("Tipo de salida:")
+        self.BalOutput_G1 = QCheckBox("Balanceada")
+        self.UnbalOutput_G1 = QCheckBox("Desbalanceada")
+        self.UnbalOutput_G1.setChecked(True)
+
+        self.typeButtonGroup_G1 = QButtonGroup()
+        self.typeButtonGroup_G1.addButton(self.BalOutput_G1, 1)
+        self.typeButtonGroup_G1.addButton(self.UnbalOutput_G1, 2)
+
+        self.typeButtonGroup_G1.buttonClicked[QAbstractButton].connect(self.setupParameters_G1)
+
+        self.type_hbox_G1 = QHBoxLayout()
+        self.type_hbox_G1.addWidget(self.BalOutput_G1)
+        self.type_hbox_G1.addWidget(self.UnbalOutput_G1)
+
+        self.impTitle = QLabel("Impedancia de salida:")
+        self.imp50_G1 = QCheckBox("50 ohms")
+        self.imp100_G1 = QCheckBox("100 ohms")
+        self.imp600_G1 = QCheckBox("600 ohms")
+        self.imp600_G1.setChecked(True)
+        self.imp100_G1.setEnabled(False)
+
+        self.impButtonGroup_G1 = QButtonGroup()
+        self.impButtonGroup_G1.addButton(self.imp50_G1, 1)
+        self.impButtonGroup_G1.addButton(self.imp100_G1, 2)
+        self.impButtonGroup_G1.addButton(self.imp600_G1, 3)
+
+        self.impButtonGroup_G1.buttonClicked[QAbstractButton].connect(self.setupParameters_G1)
+
+        self.imp_hbox_G1 = QHBoxLayout()
+        self.imp_hbox_G1.addWidget(self.imp50_G1)
+        self.imp_hbox_G1.addWidget(self.imp100_G1)
+        self.imp_hbox_G1.addWidget(self.imp600_G1)
+
+        self.generator_vBox_G1 = QVBoxLayout()
+        self.generator_vBox_G1.addWidget(self.typeTitle_G1)
+        self.generator_vBox_G1.addLayout(self.type_hbox_G1)
+        self.generator_vBox_G1.addWidget(self.impTitle)
+        self.generator_vBox_G1.addLayout(self.imp_hbox_G1)
+
+        self.generator1GroupBox.setLayout(self.generator_vBox_G1)
+
+        layout.addWidget(self.generator1GroupBox, 2, 0)
+# ------Generator 1--------
+# ------Generator 2--------
+        self.generator2GroupBox = QGroupBox("Generador 2:")
+
+        self.typeTitle_G2 = QLabel("Tipo de salida:")
+        self.BalOutput_G2 = QCheckBox("Balanceada")
+        self.UnbalOutput_G2 = QCheckBox("Desbalanceada")
+        self.UnbalOutput_G2.setChecked(True)
+
+        self.typeButtonGroup_G2 = QButtonGroup()
+        self.typeButtonGroup_G2.addButton(self.BalOutput_G2, 1)
+        self.typeButtonGroup_G2.addButton(self.UnbalOutput_G2, 2)
+
+        self.typeButtonGroup_G2.buttonClicked[QAbstractButton].connect(self.setupParameters_G2)
+
+        self.type_hbox_G2 = QHBoxLayout()
+        self.type_hbox_G2.addWidget(self.BalOutput_G2)
+        self.type_hbox_G2.addWidget(self.UnbalOutput_G2)
+
+        self.impTitle = QLabel("Impedancia de salida:")
+        self.imp50_G2 = QCheckBox("50 ohms")
+        self.imp100_G2 = QCheckBox("100 ohms")
+        self.imp600_G2 = QCheckBox("600 ohms")
+        self.imp600_G2.setChecked(True)
+        self.imp100_G2.setEnabled(False)
+
+        self.impButtonGroup_G2 = QButtonGroup()
+        self.impButtonGroup_G2.addButton(self.imp50_G2, 1)
+        self.impButtonGroup_G2.addButton(self.imp100_G2, 2)
+        self.impButtonGroup_G2.addButton(self.imp600_G2, 3)
+
+        self.impButtonGroup_G2.buttonClicked[QAbstractButton].connect(self.setupParameters_G2)
+
+        self.imp_hbox_G2 = QHBoxLayout()
+        self.imp_hbox_G2.addWidget(self.imp50_G2)
+        self.imp_hbox_G2.addWidget(self.imp100_G2)
+        self.imp_hbox_G2.addWidget(self.imp600_G2)
+
+        self.generator_vBox_G2 = QVBoxLayout()
+        self.generator_vBox_G2.addWidget(self.typeTitle_G2)
+        self.generator_vBox_G2.addLayout(self.type_hbox_G2)
+        self.generator_vBox_G2.addWidget(self.impTitle)
+        self.generator_vBox_G2.addLayout(self.imp_hbox_G2)
+
+        self.generator2GroupBox.setLayout(self.generator_vBox_G2)
+
+        layout.addWidget(self.generator2GroupBox, 3, 0)
+# ------Generator 2--------
+# ------Analyzer 1--------
+        self.analyzer1GroupBox = QGroupBox("Analizador 1:")
+
+        self.typeTitle_A1 = QLabel("Tipo de salida:")
+        self.BalOutput_A1 = QCheckBox("Balanceada")
+        self.UnbalOutput_A1 = QCheckBox("Desbalanceada")
+        self.UnbalOutput_A1.setChecked(True)
+
+        self.typeButtonGroup_A1 = QButtonGroup()
+        self.typeButtonGroup_A1.addButton(self.BalOutput_A1, 1)
+        self.typeButtonGroup_A1.addButton(self.UnbalOutput_A1, 2)
+
+        self.typeButtonGroup_A1.buttonClicked[QAbstractButton].connect(self.setupParameters_A1)
+
+        self.type_hbox_A1 = QHBoxLayout()
+        self.type_hbox_A1.addWidget(self.BalOutput_A1)
+        self.type_hbox_A1.addWidget(self.UnbalOutput_A1)
+
+        self.analyzer_vBox_A1 = QVBoxLayout()
+        self.analyzer_vBox_A1.addWidget(self.typeTitle_A1)
+        self.analyzer_vBox_A1.addLayout(self.type_hbox_A1)
+
+        self.analyzer1GroupBox.setLayout(self.analyzer_vBox_A1)
+
+        layout.addWidget(self.analyzer1GroupBox, 2, 1)
+# ------Analyzer 1--------
+# ------Analyzer 2--------
+        self.analyzer2GroupBox = QGroupBox("Analizador 1:")
+
+        self.typeTitle_A2 = QLabel("Tipo de salida:")
+        self.BalOutput_A2 = QCheckBox("Balanceada")
+        self.UnbalOutput_A2 = QCheckBox("Desbalanceada")
+        self.UnbalOutput_A2.setChecked(True)
+
+        self.typeButtonGroup_A2 = QButtonGroup()
+        self.typeButtonGroup_A2.addButton(self.BalOutput_A2, 1)
+        self.typeButtonGroup_A2.addButton(self.UnbalOutput_A2, 2)
+
+        self.typeButtonGroup_A2.buttonClicked[QAbstractButton].connect(self.setupParameters_A2)
+
+        self.type_hbox_A2 = QHBoxLayout()
+        self.type_hbox_A2.addWidget(self.BalOutput_A2)
+        self.type_hbox_A2.addWidget(self.UnbalOutput_A2)
+
+        self.analyzer_vBox_A2 = QVBoxLayout()
+        self.analyzer_vBox_A2.addWidget(self.typeTitle_A2)
+        self.analyzer_vBox_A2.addLayout(self.type_hbox_A2)
+
+        self.analyzer2GroupBox.setLayout(self.analyzer_vBox_A2)
+
+        layout.addWidget(self.analyzer2GroupBox, 3, 1)
+# ------Analyzer 2--------
+
+        self.confTitle = QLabel(self)
+        self.confTitle.setText("Configuracion de los puertos frontales:")
+        layout.addWidget(self.confTitle, 0, 0)
+
+        self.generatorImageLabel = QLabel(self)
+        self.generatorPixmap = QPixmap("sources/Pictures/generator.png")
+        self.generatorImageLabel.setPixmap(self.generatorPixmap)
+        layout.addWidget(self.generatorImageLabel, 1, 0)
+
+        self.analyzerImageLabel = QLabel(self)
+        self.analyzerPixmap = QPixmap("sources/Pictures/analyzer.png")
+        self.analyzerImageLabel.setPixmap(self.analyzerPixmap)
+        layout.addWidget(self.analyzerImageLabel, 1, 1)
+
+        self.SetParameters = QPushButton("Aplicar cambios")
+        self.SetParameters.clicked.connect(self.setParametersButtonClicked)
+        layout.addWidget(self.SetParameters, 4, 0, 2, 2)
+
+        return layout
+
 class HorizontalBox(QWidget):
 
     def __init__(self):
@@ -437,24 +702,23 @@ def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT, bw=LOWBW):
         magFFT_Thread.setFFTData(points, bw, instrument)
     else:                                                                       #FOR DEBUGGIN PURPOSES
         magFFT_Thread.setFFTData(points, bw)
-
     magFFT_Thread.start()
     magFFT_Thread.join()
     x,y,status = magFFT_Thread.getFFTData()
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
-stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
+                stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
     sweep_Thread = Sweep_Thread(name = "Sweep_Thread")
     if mode == WITH_INSTRUMENT:
         sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
                             instrument)
     else:
         sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
-
     sweep_Thread.start()
     sweep_Thread.join()
     x,y,m,status = sweep_Thread.getSweepData()
+    saveSweepData(x,m)
     return x,y,m,status
 
 def PlotSobplot (figure, graphType):
@@ -467,19 +731,19 @@ def PlotSobplot (figure, graphType):
         ax[0].set_ylabel("Magnitud [dB]")
         ax[0].set_title("FFT Magnitud")
     if graphType == LINEAR_SWEEP:
-        ax.append(figure.figure.add_subplot(211))
+        ax.append(figure.figure.add_subplot(111))
+        # ax[0].clear()
+        # ax[0].grid(True)
+        # # ax[0].set_xscale("log")
+        # # ax[0].set_xlabel("Frecuencia [Hz]")
+        # ax[0].set_ylabel("Frecuencia [Hz]")
+        # ax[0].set_title("Barrido en fecuencia")
+        # ax.append(figure.figure.add_subplot(212))
         ax[0].clear()
         ax[0].grid(True)
-        # ax[0].set_xscale("log")
-        # ax[0].set_xlabel("Frecuencia [Hz]")
-        ax[0].set_ylabel("Frecuencia [Hz]")
-        ax[0].set_title("Barrido en fecuencia")
-        ax.append(figure.figure.add_subplot(212))
-        ax[1].clear()
-        ax[1].grid(True)
-        ax[1].set_xscale("log")
-        ax[1].set_xlabel("Frecuencia [Hz]")
-        ax[1].set_ylabel("Magnitud [dB]")
+        ax[0].set_xscale("log")
+        ax[0].set_xlabel("Frecuencia [Hz]")
+        ax[0].set_ylabel("Magnitud [dB]")
     return ax
 
 def SendCommand (instrument, command):
@@ -488,13 +752,20 @@ def SendCommand (instrument, command):
         data = instrument.read()
         #print("Datos recibidos: " + data)
         return data
+    return
+
+def saveSweepData(x, m):
+    dirpath = os.getcwd()
+    measureFile = open(dirpath + "/SweepData.csv", "w+")
+    for i in range(len(x)):
+        measureFile.write(str(x[i]) + "," + str(m[i]) + "\n")
+    return
 
 class FFT_Thread(threading.Thread):
     def setFFTData(self, points, bw, instrument=-1):
         self.instrument = instrument
         self.points = points
         self.bw = bw
-
     def getFFTData(self):
         return self.x, self.y, self.status
 
@@ -514,7 +785,6 @@ class FFT_Thread(threading.Thread):
                 self.y = 0
                 self.status = -1
 
-
 class Sweep_Thread(threading.Thread):
     def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
                         instrument=-1):
@@ -524,7 +794,6 @@ class Sweep_Thread(threading.Thread):
         self.stepSize = stepSize
         self.outVolt = outVolt
         self.dwellTimeMS = dwellTimeMS
-
     def getSweepData(self):
         return self.x, self.y, self.m, self.status
 
@@ -547,7 +816,6 @@ class Sweep_Thread(threading.Thread):
                 self.y = 0
                 self.m = 0
                 self.status = -1
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
