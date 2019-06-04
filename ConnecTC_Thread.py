@@ -118,7 +118,9 @@ class MyTableWidget(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
         # FFTMag Banwidth
-        self.bw = LOWBW
+        self.fftBw = LOWBW
+        # LinearSweep Banwidth
+        self.linearSweepBw = HIGHBW
         # Generators setup parameters
         self.type_G1 = UNBALANCED
         self.impedance_G1 = IMP600
@@ -145,11 +147,11 @@ class MyTableWidget(QWidget):
         else:
             self.parent().statusBar().showMessage("Ya se encuentra conectado al equipo")
 
-    def FFTMagBtnClicked (self, points, bw):
+    def FFTMagBtnClicked (self, points, fftBw):
         if self.instrumentList:
             self.parent().statusBar().showMessage("Comenzando la comunicacion...")
             mode = WITH_INSTRUMENT                                                              #FOR DEBUGGIN PURPOSES
-            x,y,status = FFT_Mag_Measure (self.instrument, points, mode, bw)
+            x,y,status = FFT_Mag_Measure (self.instrument, points, mode, fftBw)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
@@ -160,7 +162,7 @@ class MyTableWidget(QWidget):
         else:
             self.parent().statusBar().showMessage("Primero debe dar \"Conectar\"")
             mode = NO_INSTRUMENT                                                                #FOR DEBUGGIN PURPOSES
-            x,y,status = FFT_Mag_Measure(self.instrument, points, mode, bw)
+            x,y,status = FFT_Mag_Measure(self.instrument, points, mode, fftBw)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición")
                 return
@@ -202,7 +204,7 @@ class MyTableWidget(QWidget):
             mode = WITH_INSTRUMENT                                                                                      #FOR DEBUGGIN PURPOSES
             x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
-            self.dwellTimeMS, mode)
+            self.dwellTimeMS, mode, self.linearSweepBw)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
@@ -234,7 +236,7 @@ class MyTableWidget(QWidget):
             mode = NO_INSTRUMENT                                                                                        #FOR DEBUGGIN PURPOSES
             x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
-            self.dwellTimeMS, mode)
+            self.dwellTimeMS, mode, self.linearSweepBw)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
@@ -247,9 +249,16 @@ class MyTableWidget(QWidget):
     def setFFTBw (self, btn):
         # print (btn.text()+" is selected")
         if(btn.text()=="30 kHz"):
-            self.bw = LOWBW
+            self.fftBw = LOWBW
         else:
-            self.bw = HIGHBW
+            self.fftBw = HIGHBW
+
+    def setLSweepBw (self, btn):
+        # print (btn.text()+" is selected")
+        if(btn.text()=="30 kHz"):
+            self.linearSweepBw = LOWBW
+        else:
+            self.linearSweepBw = HIGHBW
 
     def setupParameters_G1 (self, btn):
         # print (btn.text() + " is selected")
@@ -359,15 +368,15 @@ class Tabs (MyTableWidget):
         layout.leftGridLayout.addWidget(self.bwLabel, 1, 0)
 
         self.FFTMag256Btn = QPushButton("256 Puntos")
-        self.FFTMag256Btn.clicked.connect(lambda: self.FFTMagBtnClicked(256, self.bw))
+        self.FFTMag256Btn.clicked.connect(lambda: self.FFTMagBtnClicked(256, self.fftBw))
         layout.leftGridLayout.addWidget(self.FFTMag256Btn, 2, 1)
 
         self.FFTMag512Btn = QPushButton("512 Puntos")
-        self.FFTMag512Btn.clicked.connect(lambda: self.FFTMagBtnClicked(512, self.bw))
+        self.FFTMag512Btn.clicked.connect(lambda: self.FFTMagBtnClicked(512, self.fftBw))
         layout.leftGridLayout.addWidget(self.FFTMag512Btn, 3, 1)
 
         self.FFTMag1024Btn = QPushButton("1024 Puntos")
-        self.FFTMag1024Btn.clicked.connect(lambda: self.FFTMagBtnClicked(1024, self.bw))
+        self.FFTMag1024Btn.clicked.connect(lambda: self.FFTMagBtnClicked(1024, self.fftBw))
         layout.leftGridLayout.addWidget(self.FFTMag1024Btn, 4, 1)
 
         self.bwLabel = QLabel("Ancho de banda: ")
@@ -436,7 +445,7 @@ class Tabs (MyTableWidget):
         layout.leftGridLayout.addWidget(self.vacLabel, 5, 1)
 
         self.vac_Edit = QLineEdit()
-        self.vac_Edit.setText("2")
+        self.vac_Edit.setText("1")
         self.vac_Edit.setMaximumWidth(80)
         layout.leftGridLayout.addWidget(self.vac_Edit, 5, 2)
 
@@ -445,9 +454,28 @@ class Tabs (MyTableWidget):
         layout.leftGridLayout.addWidget(self.dwellLabel, 6, 1)
 
         self.dwell_Edit = QLineEdit()
-        self.dwell_Edit.setText("1000")
+        self.dwell_Edit.setText("500")
         self.dwell_Edit.setMaximumWidth(80)
         layout.leftGridLayout.addWidget(self.dwell_Edit, 6, 2)
+
+        self.bwLabel = QLabel("Ancho de banda: ")
+        self.bwLabel.setMaximumWidth(200)
+        layout.leftGridLayout.addWidget(self.bwLabel, 7, 1)
+
+        self.lowBw = QCheckBox("30 kHz")
+        self.lowBw.setChecked(True)
+        layout.leftGridLayout.addWidget(self.lowBw, 8,1)
+
+        self.highBw = QCheckBox("100 kHz")
+        layout.leftGridLayout.addWidget(self.highBw, 8,2)
+
+        self.FFTButtonGroup = QButtonGroup()
+        self.FFTButtonGroup.addButton(self.lowBw, 1)
+        self.FFTButtonGroup.addButton(self.highBw, 2)
+
+        self.highBw.setChecked(True)
+
+        self.FFTButtonGroup.buttonClicked[QAbstractButton].connect(self.setLSweepBw)
 
         self.initSweep = QPushButton("Iniciar Sweep")
         self.initSweep.clicked.connect(lambda: self.sweepBtnClicked())
@@ -602,7 +630,7 @@ class Tabs (MyTableWidget):
         layout.addWidget(self.analyzer1GroupBox, 2, 1)
 # ------Analyzer 1--------
 # ------Analyzer 2--------
-        self.analyzer2GroupBox = QGroupBox("Analizador 1:")
+        self.analyzer2GroupBox = QGroupBox("Analizador 2:")
 
         self.typeTitle_A2 = QLabel("Tipo de salida:")
         self.BalOutput_A2 = QCheckBox("Balanceada")
@@ -708,13 +736,14 @@ def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT, bw=LOWBW):
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
-                stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
+                stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT, bw=HIGHBW):
     sweep_Thread = Sweep_Thread(name = "Sweep_Thread")
     if mode == WITH_INSTRUMENT:
-        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
-                            instrument)
+        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt,
+        dwellTimeMS, bw, instrument)
     else:
-        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt, dwellTimeMS)
+        sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt,
+        bw, dwellTimeMS)
     sweep_Thread.start()
     sweep_Thread.join()
     x,y,m,status = sweep_Thread.getSweepData()
@@ -779,14 +808,14 @@ class FFT_Thread(threading.Thread):
                 self.status = -1
         else:
             try:
-                self.x, self.y, self.status = FFTMag.StartMeasure(self.instrument, self.points, self.bw)
+                self.x, self.y, self.status = FFTMag.StartMeasure(self.instrument, self.points, self.fftBw)
             except:
                 self.x = 0
                 self.y = 0
                 self.status = -1
 
 class Sweep_Thread(threading.Thread):
-    def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
+    def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS, bw,
                         instrument=-1):
         self.instrument = instrument
         self.startFreq = startFreq
@@ -794,6 +823,7 @@ class Sweep_Thread(threading.Thread):
         self.stepSize = stepSize
         self.outVolt = outVolt
         self.dwellTimeMS = dwellTimeMS
+        self.bw = bw
     def getSweepData(self):
         return self.x, self.y, self.m, self.status
 
@@ -801,7 +831,7 @@ class Sweep_Thread(threading.Thread):
         if self.instrument == -1:
             try:
                 self.x, self.y, self.m, self.status = LinearSweep.AnalyzeFile(self.startFreq,
-                self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+                self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS, self.bw)
             except:
                 self.x = 0
                 self.y = 0
@@ -810,7 +840,7 @@ class Sweep_Thread(threading.Thread):
         else:
             try:
                 self.x, self.y, self.m, self.status = LinearSweep.StartMeasure(self.instrument,
-                self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
+                self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS, self.bw)
             except:
                 self.x = 0
                 self.y = 0

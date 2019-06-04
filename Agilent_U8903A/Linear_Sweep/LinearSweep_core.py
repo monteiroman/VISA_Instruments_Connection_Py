@@ -20,8 +20,10 @@ sys.path.insert(0, 'Libreria')
 # Traemos la clase base que implmenta las funciones de VISA
 from instrument import Instrument
 
+LOWBW = 30000
+HIGHBW = 100000
 
-def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
+def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=1, bw=HIGHBW, dwellTimeMS=1000):
 
     instrument.write("INIT:CONT:ANAL OFF, (@1)")    # Turns off the analyzer in channel 1
     instrument.write("INIT:CONT:ANAL OFF, (@2)")    # Turns off the analyzer in channel 2
@@ -34,6 +36,11 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     # instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
     # instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
     # instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
+    if(bw==LOWBW):
+        bWString = "LOW"
+    else:
+        bWString = "HIGH"
+    instrument.write("INP:BAND " + bWString)
 
     instrument.write("SOUR:SWE:INT ANAL")           # Sets the sweep generator interface to analog.
     instrument.write("SOUR:FUNC SINE, (@1)")        # Sets the generator waveform type to sine on channel 1.
@@ -94,8 +101,9 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
 
     return xVal,freqVal,vacVal,1
 
-def AnalyzeFile(startFreq=100, endFreq=1000, stepSize=200, outVolt=1, dwellTimeMS=1000):
+def AnalyzeFile(startFreq=100, endFreq=1000, stepSize=200, outVolt=1, bw=HIGHBW, dwellTimeMS=500):
 
+    print(str(startFreq) + " " + str(endFreq) + " " + str(stepSize) + " " + str(outVolt) + " " + str(dwellTimeMS) + " " + str(bw))
     # Open file and read lines for debugging
     lines = [line.rstrip('\n') for line in open('RAW_Message2')]
 
