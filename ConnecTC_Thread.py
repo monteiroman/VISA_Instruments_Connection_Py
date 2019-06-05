@@ -119,8 +119,6 @@ class MyTableWidget(QWidget):
         self.setLayout(self.layout)
         # FFTMag Banwidth
         self.fftBw = LOWBW
-        # LinearSweep Banwidth
-        self.linearSweepBw = HIGHBW
         # Generators setup parameters
         self.type_G1 = UNBALANCED
         self.impedance_G1 = IMP600
@@ -190,8 +188,8 @@ class MyTableWidget(QWidget):
             if not self.startFreq.isdigit() or not self.endFreq.isdigit() or not self.stepSize.isdigit() or not self.outVolt.isdigit() or not self.dwellTimeMS.isdigit():
                 self.parent().statusBar().showMessage("Algun valor no es un número")
                 return
-            if int(self.startFreq) < 20 or int(self.startFreq) > 20000 or int(self.endFreq) < 20 or int(self.endFreq) > 20000 or int(self.startFreq) > int(self.endFreq):
-                self.parent().statusBar().showMessage("La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 20000 Hz")
+            if int(self.startFreq) < 20 or int(self.startFreq) > 100000 or int(self.endFreq) < 20 or int(self.endFreq) > 100000 or int(self.startFreq) > int(self.endFreq):
+                self.parent().statusBar().showMessage("La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 100000 Hz")
                 return
             if int(self.stepSize) > int(self.endFreq):
                 self.parent().statusBar().showMessage("El salto de frecuencia no puede ser mayor a la frecuencia final")
@@ -204,7 +202,7 @@ class MyTableWidget(QWidget):
             mode = WITH_INSTRUMENT                                                                                      #FOR DEBUGGIN PURPOSES
             x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
-            self.dwellTimeMS, mode, self.linearSweepBw)
+            self.dwellTimeMS, mode)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
@@ -223,9 +221,9 @@ class MyTableWidget(QWidget):
             if not self.startFreq.isdigit() or not self.endFreq.isdigit() or not self.stepSize.isdigit() or not self.outVolt.isdigit() or not self.dwellTimeMS.isdigit():
                 self.parent().statusBar().showMessage("Algun valor no es un número")
                 return
-            if int(self.startFreq) < 20 or int(self.startFreq) > 20000 or int(self.endFreq) < 20 or int(self.endFreq) > 20000 or int(self.startFreq) > int(self.endFreq):
+            if int(self.startFreq) < 20 or int(self.startFreq) > 100000 or int(self.endFreq) < 20 or int(self.endFreq) > 100000 or int(self.startFreq) > int(self.endFreq):
                 self.parent().statusBar().showMessage(
-                "La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 20000 Hz")
+                "La frecuencia de inicio debe ser menor a la final y ambas deben estar en un rango de 20 a 100000 Hz")
                 return
             if int(self.stepSize) > int(self.endFreq):
                 self.parent().statusBar().showMessage("El salto de frecuencia no puede ser mayor a la frecuencia final")
@@ -236,7 +234,7 @@ class MyTableWidget(QWidget):
             mode = NO_INSTRUMENT                                                                                        #FOR DEBUGGIN PURPOSES
             x,y,m,status = Frequency_Sweep_Measure(self.instrument,
             self.startFreq, self.endFreq, self.stepSize, self.outVolt,
-            self.dwellTimeMS, mode, self.linearSweepBw)
+            self.dwellTimeMS, mode)
             if status == -1:
                 self.parent().statusBar().showMessage("No se pudo realizar la medición.")
                 return
@@ -252,13 +250,6 @@ class MyTableWidget(QWidget):
             self.fftBw = LOWBW
         else:
             self.fftBw = HIGHBW
-
-    def setLSweepBw (self, btn):
-        # print (btn.text()+" is selected")
-        if(btn.text()=="30 kHz"):
-            self.linearSweepBw = LOWBW
-        else:
-            self.linearSweepBw = HIGHBW
 
     def setupParameters_G1 (self, btn):
         # print (btn.text() + " is selected")
@@ -457,25 +448,6 @@ class Tabs (MyTableWidget):
         self.dwell_Edit.setText("500")
         self.dwell_Edit.setMaximumWidth(80)
         layout.leftGridLayout.addWidget(self.dwell_Edit, 6, 2)
-
-        self.bwLabel = QLabel("Ancho de banda: ")
-        self.bwLabel.setMaximumWidth(200)
-        layout.leftGridLayout.addWidget(self.bwLabel, 7, 1)
-
-        self.lowBw = QCheckBox("30 kHz")
-        self.lowBw.setChecked(True)
-        layout.leftGridLayout.addWidget(self.lowBw, 8,1)
-
-        self.highBw = QCheckBox("100 kHz")
-        layout.leftGridLayout.addWidget(self.highBw, 8,2)
-
-        self.FFTButtonGroup = QButtonGroup()
-        self.FFTButtonGroup.addButton(self.lowBw, 1)
-        self.FFTButtonGroup.addButton(self.highBw, 2)
-
-        self.highBw.setChecked(True)
-
-        self.FFTButtonGroup.buttonClicked[QAbstractButton].connect(self.setLSweepBw)
 
         self.initSweep = QPushButton("Iniciar Sweep")
         self.initSweep.clicked.connect(lambda: self.sweepBtnClicked())
@@ -736,14 +708,14 @@ def FFT_Mag_Measure (instrument, points, mode=WITH_INSTRUMENT, bw=LOWBW):
     return x,y,status
 
 def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
-                stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT, bw=HIGHBW):
+                stepSize=200, outVolt=1, dwellTimeMS=1000, mode=WITH_INSTRUMENT):
     sweep_Thread = Sweep_Thread(name = "Sweep_Thread")
     if mode == WITH_INSTRUMENT:
         sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt,
-        dwellTimeMS, bw, instrument)
+        dwellTimeMS, instrument)
     else:
         sweep_Thread.setSweepData(startFreq, endFreq, stepSize, outVolt,
-        bw, dwellTimeMS)
+        dwellTimeMS)
     sweep_Thread.start()
     sweep_Thread.join()
     x,y,m,status = sweep_Thread.getSweepData()
@@ -815,7 +787,7 @@ class FFT_Thread(threading.Thread):
                 self.status = -1
 
 class Sweep_Thread(threading.Thread):
-    def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS, bw,
+    def setSweepData(self, startFreq, endFreq, stepSize, outVolt, dwellTimeMS,
                         instrument=-1):
         self.instrument = instrument
         self.startFreq = startFreq
@@ -823,7 +795,6 @@ class Sweep_Thread(threading.Thread):
         self.stepSize = stepSize
         self.outVolt = outVolt
         self.dwellTimeMS = dwellTimeMS
-        self.bw = bw
     def getSweepData(self):
         return self.x, self.y, self.m, self.status
 
@@ -831,7 +802,7 @@ class Sweep_Thread(threading.Thread):
         if self.instrument == -1:
             try:
                 self.x, self.y, self.m, self.status = LinearSweep.AnalyzeFile(self.startFreq,
-                self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS, self.bw)
+                self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
             except:
                 self.x = 0
                 self.y = 0
@@ -840,7 +811,7 @@ class Sweep_Thread(threading.Thread):
         else:
             try:
                 self.x, self.y, self.m, self.status = LinearSweep.StartMeasure(self.instrument,
-                self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS, self.bw)
+                self.startFreq, self.endFreq, self.stepSize, self.outVolt, self.dwellTimeMS)
             except:
                 self.x = 0
                 self.y = 0
