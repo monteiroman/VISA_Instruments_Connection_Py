@@ -719,7 +719,8 @@ def Frequency_Sweep_Measure (instrument, startFreq=100, endFreq=1000,
     sweep_Thread.start()
     sweep_Thread.join()
     x,y,m,status = sweep_Thread.getSweepData()
-    saveSweepData(x,m)
+    if(status != -1):
+        saveSweepData(x,m)
     return x,y,m,status
 
 def PlotSobplot (figure, graphType):
