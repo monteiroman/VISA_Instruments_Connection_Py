@@ -767,14 +767,14 @@ class FFT_Thread(threading.Thread):
     def setFFTData(self, points, bw, instrument=-1):
         self.instrument = instrument
         self.points = points
-        self.bw = bw
+        self.fftBw = bw
     def getFFTData(self):
         return self.x, self.y, self.status
 
     def run(self):
         if self.instrument == -1:
             try:
-                self.x, self.y, self.status = FFTMag.AnalyzeFile(self.points, self.bw)
+                self.x, self.y, self.status = FFTMag.AnalyzeFile(self.points, self.fftBw)
             except:
                 self.x = 0
                 self.y = 0

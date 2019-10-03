@@ -15,12 +15,24 @@ $ pip install pyusb
 
 $ pip install -U pyvisa-py
 
+## USB permissions
+
+cp  /etc/udev/rules.d/99-com.rules  /etc/udev/rules.d/99-com.rules.BAK
+
+nano  /etc/udev/rules.d/99-com.rules
+
+SUBSYSTEM=="usb", MODE="0666", GROUP="usbusers"
+
+sudo groupadd usbusers
+
+sudo usermod -a -G usbusers USERNAME
+
 ## Test
 PyVisa linux console test:
 
 python -m visa info
 
-Python PyVisa 
+Python PyVisa
 
 import visa
 
@@ -28,11 +40,10 @@ rm = visa.ResourceManager('@py')
 
 print(rm.list_resources())
 
-## Additional information 
+## Additional information
 
 U8903A Programmer's Reference.
 http://www.swarthmore.edu/NatSci/echeeve1/Ref/U8903A/U8903-ProgramRef.pdf
 
 User manual
 https://literature.cdn.keysight.com/litweb/pdf/U8903-90002.pdf
-

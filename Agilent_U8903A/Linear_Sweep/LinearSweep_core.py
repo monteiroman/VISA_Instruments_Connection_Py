@@ -33,7 +33,7 @@ def StartMeasure(instrument, startFreq=100, endFreq=1000, stepSize=200, outVolt=
     # instrument.write("OUTP:TYPE UNB, (@2)")         # sets the output of channel 2 to unbalanced mode
     # instrument.write("OUTP:IMP IMP50, (@1)")        # sets the output of channel 1 to 50ohms
     # instrument.write("OUTP:IMP IMP50, (@2)")        # sets the output of channel 2 to 50ohms
-    if(endFreq < 27000):
+    if(int(endFreq) < 27000):
         bWString = "LOW"
     else:
         bWString = "HIGH"
