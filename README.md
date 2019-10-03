@@ -17,15 +17,29 @@ $ pip install -U pyvisa-py
 
 ## USB permissions
 
-cp  /etc/udev/rules.d/99-com.rules  /etc/udev/rules.d/99-com.rules.BAK
+Check at /etc/udev/rules.d if you have a file called 99-com.rules. If you do, write 
+in a console:
 
-nano  /etc/udev/rules.d/99-com.rules
+sudo cp  /etc/udev/rules.d/99-com.rules  /etc/udev/rules.d/99-com.rules.BAK
+
+If you don't simply open 99-com.rules like this:
+
+sudo nano  /etc/udev/rules.d/99-com.rules
+
+Add this line:
 
 SUBSYSTEM=="usb", MODE="0666", GROUP="usbusers"
 
+And save the file.
+Then add a group with name "usbusers"
+
 sudo groupadd usbusers
 
+Add your user name to this group.
+
 sudo usermod -a -G usbusers USERNAME
+
+reboot
 
 ## Test
 PyVisa linux console test:
