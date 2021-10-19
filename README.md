@@ -11,48 +11,48 @@ The following functions are available:
 
 ## Installation
 
-$ pip install pyusb
+    $ pip install pyusb
 
-$ pip install -U pyvisa-py
+    $ pip install -U pyvisa-py
 
 ## USB permissions
 
 Check at /etc/udev/rules.d if you have a file called 99-com.rules. If you do, write 
 in a console:
 
-sudo cp  /etc/udev/rules.d/99-com.rules  /etc/udev/rules.d/99-com.rules.BAK
+    sudo cp  /etc/udev/rules.d/99-com.rules  /etc/udev/rules.d/99-com.rules.BAK
 
 If you don't simply open 99-com.rules like this:
 
-sudo nano  /etc/udev/rules.d/99-com.rules
+    sudo nano  /etc/udev/rules.d/99-com.rules
 
 Add this line:
 
-SUBSYSTEM=="usb", MODE="0666", GROUP="usbusers"
+    SUBSYSTEM=="usb", MODE="0666", GROUP="usbusers"
 
 And save the file.
 Then add a group with name "usbusers"
 
-sudo groupadd usbusers
+    sudo groupadd usbusers
 
 Add your user name to this group.
 
-sudo usermod -a -G usbusers USERNAME
+    sudo usermod -a -G usbusers USERNAME
 
 reboot
 
 ## Test
 PyVisa linux console test:
 
-python -m visa info
+    python -m visa info
 
 Python PyVisa
 
-import visa
+    import visa
 
-rm = visa.ResourceManager('@py')
+    rm = visa.ResourceManager('@py')
 
-print(rm.list_resources())
+    print(rm.list_resources())
 
 ## Additional information
 
