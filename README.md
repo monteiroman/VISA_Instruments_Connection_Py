@@ -11,9 +11,9 @@ The following functions are available:
 
 ## Installation
 
-    $ pip install pyusb
+    pip install pyusb
 
-    $ pip install -U pyvisa-py
+    pip install -U pyvisa-py
 
 ## USB permissions
 
