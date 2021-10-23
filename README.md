@@ -10,12 +10,25 @@ The following functions are available:
 
 
 ## Installation
+Install these packages:
+
+For USB communication:
 
     pip install pyusb
 
+For implementation of the VISA standard directly in Python:
+
     pip install -U pyvisa-py
 
-## USB permissions
+GUI is been managed with PyQt5:
+
+    pip install pyqt5
+
+And for output plots:
+
+    pip install matplotlib
+
+### USB permissions
 
 Check at /etc/udev/rules.d if you have a file called 99-com.rules. If you do, write 
 in a console:
@@ -41,7 +54,7 @@ Add your user name to this group.
 
 reboot
 
-## Test
+### Test
 PyVisa linux console test:
 
     python -m visa info
